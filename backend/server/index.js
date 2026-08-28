@@ -20,6 +20,9 @@ const telegramRoutes = require('../routes/telegram.routes');
 
 const app = express();
 
+app.get('/', (req, res) => {
+  res.send('Server is running successfully!');
+});
 app.use(helmet());
 // Dev-stage CORS: open to any origin so the frontend (served from Live
 // Server / any localhost port) can always reach the backend. Tighten this
