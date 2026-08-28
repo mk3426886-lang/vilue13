@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="vilueGrad" x1="40" y1="40" x2="472" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF4D9D"/>
+      <stop offset="55%" stop-color="#E0248C"/>
+      <stop offset="100%" stop-color="#6440E0"/>
+    </linearGradient>
+    <linearGradient id="coinGrad" x1="222" y1="88" x2="290" y2="156" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFE9F3"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle background -->
+  <rect x="0" y="0" width="512" height="512" rx="124" fill="url(#vilueGrad)"/>
+
+  <!-- Subtle inner glow -->
+  <circle cx="140" cy="110" r="150" fill="#FFFFFF" opacity="0.08"/>
+
+  <!-- V-shaped wallet mark -->
+  <path d="M158 214 L256 362 L354 214"
+        fill="none" stroke="#FFFFFF" stroke-width="54"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Coin resting above the V -->
+  <circle cx="256" cy="140" r="44" fill="url(#coinGrad)"/>
+  <circle cx="256" cy="140" r="44" fill="none" stroke="#E0248C" stroke-width="4" opacity="0.35"/>
+  <path d="M240 140h32M256 124v32" stroke="#E0248C" stroke-width="7" stroke-linecap="round" opacity="0.65"/>
+</svg>

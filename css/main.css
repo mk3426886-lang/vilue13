@@ -1,0 +1,158 @@
+/* ==========================================================================
+   Vilue — Design System
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Cairo';
+  src: local('Cairo');
+  font-display: swap;
+}
+
+:root {
+  /* ---- Color: Core ---- */
+  --c-navy-900: #0B1330;
+  --c-navy-800: #101B45;
+  --c-navy-700: #1B2A5E;
+  --c-navy-600: #2A3D7C;
+
+  --c-white: #FFFFFF;
+  --c-bg-soft: #F4F5FA;
+  --c-bg-field: #EEF0F7;
+
+  --c-gray-500: #8B8FA8;
+  --c-gray-600: #6B7089;
+  --c-gray-700: #4A4F6A;
+
+  --c-pink-500: #FF3E8E;
+  --c-pink-600: #E01C74;
+  --c-pink-grad: linear-gradient(135deg, #FF4D9D 0%, #E01C74 55%, #9A1360 100%);
+
+  --c-purple-500: #7C5CFF;
+  --c-purple-600: #6440E0;
+
+  --c-success: #1FAF6D;
+  --c-warning: #F5A524;
+  --c-danger: #E5484D;
+
+  /* ---- Semantic ---- */
+  --color-bg: var(--c-bg-soft);
+  --color-surface: var(--c-white);
+  --color-text: var(--c-navy-900);
+  --color-text-muted: var(--c-gray-600);
+  --color-border: #E3E5F0;
+  --color-primary: var(--c-navy-800);
+  --color-primary-hover: var(--c-navy-700);
+  --color-accent: var(--c-pink-600);
+
+  /* ---- Radius ---- */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-full: 999px;
+
+  /* ---- Shadow ---- */
+  --shadow-sm: 0 1px 2px rgba(11, 19, 48, 0.06);
+  --shadow-md: 0 8px 24px rgba(11, 19, 48, 0.08);
+  --shadow-lg: 0 16px 40px rgba(11, 19, 48, 0.14);
+  --shadow-pink: 0 12px 28px rgba(224, 28, 116, 0.28);
+
+  /* ---- Spacing scale ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* ---- Typography ---- */
+  --font-ar: 'Cairo', 'Tajawal', sans-serif;
+  --font-en: 'Inter', 'Segoe UI', sans-serif;
+  --font-body: var(--font-ar);
+
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 17px;
+  --fs-lg: 20px;
+  --fs-xl: 26px;
+  --fs-2xl: 32px;
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(.4, 0, .2, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+
+  --topbar-h: 60px;
+  --bottomnav-h: 68px;
+}
+
+html[dir="ltr"] {
+  --font-body: var(--font-en);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 700; }
+p { margin: 0; }
+
+a { color: inherit; text-decoration: none; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+img { max-width: 100%; display: block; }
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 var(--sp-5);
+}
+
+@media (min-width: 900px) {
+  .container { max-width: 1080px; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Visible keyboard focus */
+:focus-visible {
+  outline: 2px solid var(--c-purple-500);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

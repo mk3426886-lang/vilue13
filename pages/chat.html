@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | الدردشة</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div style="display:flex; flex-direction:column; height:100vh; background:var(--color-bg);">
+    <header class="topbar" style="flex-shrink:0;">
+      <button class="icon-btn" onclick="history.back()" aria-label="Back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="topbar-brand" id="chat-title" style="font-size:16px;">دردشة</div>
+      <button class="icon-btn" id="gift-btn" aria-label="Send gift">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </button>
+    </header>
+
+    <div id="chat-messages" style="flex:1; overflow-y:auto; padding: var(--sp-4) var(--sp-4);"></div>
+
+    <div id="gift-picker" style="display:none; background:var(--c-white); border-top:1px solid var(--color-border); padding: var(--sp-4);">
+      <div style="font-weight:700; font-size:13px; margin-bottom:var(--sp-3);">اختر هدية</div>
+      <div id="gift-options" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;"></div>
+    </div>
+
+    <form id="chat-form" style="flex-shrink:0; display:flex; gap:8px; padding: var(--sp-3) var(--sp-4); background:var(--c-white); border-top:1px solid var(--color-border);">
+      <input class="field-input" id="chat-input" type="text" placeholder="اكتب رسالة..." style="flex:1;" autocomplete="off">
+      <button type="submit" class="btn-sm btn-primary" style="border-radius:12px; padding: 0 18px;">إرسال</button>
+    </form>
+  </div>
+
+  <style>
+    .chat-bubble { max-width: 75%; padding: 10px 14px; border-radius: 16px; margin-bottom: 8px; font-size: 14px; line-height:1.5; word-break: break-word; }
+    .chat-bubble.mine { background: var(--color-primary); color: var(--c-white); margin-inline-start: auto; border-end-end-radius: 4px; }
+    .chat-bubble.theirs { background: var(--c-white); color: var(--color-text); box-shadow: var(--shadow-sm); margin-inline-end: auto; border-end-start-radius: 4px; }
+    .chat-bubble.gift { background: var(--c-pink-grad); color: var(--c-white); text-align:center; font-weight:700; }
+    .gift-option { background: var(--c-bg-field); border: none; border-radius: var(--radius-md); padding: var(--sp-3) var(--sp-2); text-align:center; font-size:12px; font-weight:700; }
+    .gift-option .emoji { font-size: 22px; display:block; margin-bottom:4px; }
+  </style>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/messages.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const GIFT_LABELS = {
+      rose: { emoji: '🌹', name: 'وردة' }, roses: { emoji: '💐', name: 'باقة ورد' },
+      balloon: { emoji: '🎈', name: 'بالون' }, heart: { emoji: '❤️', name: 'قلب' },
+      airplane: { emoji: '✈️', name: 'طائرة' }, world_cup: { emoji: '🏆', name: 'كأس العالم' },
+    };
+
+    let currentUserId = null;
+    let friendId = null;
+
+    function renderMessages(messages) {
+      const container = Vilue_Utils.qs('#chat-messages');
+      const wasAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 40;
+
+      container.innerHTML = messages.map((m) => {
+        const isMine = m.sender_id === currentUserId;
+        if (m.gift_type) {
+          const [type, qty] = m.gift_type.split(':');
+          const label = GIFT_LABELS[type] || { emoji: '🎁', name: type };
+          return `<div class="chat-bubble gift">${label.emoji} أرسل هدية ${label.name} × ${qty}</div>`;
+        }
+        return `<div class="chat-bubble ${isMine ? 'mine' : 'theirs'}">${m.content}</div>`;
+      }).join('') || '<p style="text-align:center; color:var(--color-text-muted); font-size:13px; margin-top:40px;">ابدأ المحادثة الآن</p>';
+
+      if (wasAtBottom) container.scrollTop = container.scrollHeight;
+    }
+
+    async function loadMessages() {
+      try {
+        const { messages } = await Vilue_Messages.getConversation(friendId);
+        renderMessages(messages);
+      } catch (err) {
+        if (err.code === 'NOT_FRIENDS') {
+          Vilue_Utils.showToast('يجب أن تكونا أصدقاء للدردشة', 'error');
+          setTimeout(() => { window.location.href = 'friends.html'; }, 1500);
+        }
+      }
+    }
+
+    document.addEventListener('vilue:app-ready', async () => {
+      if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+      const params = new URLSearchParams(location.search);
+      friendId = params.get('friendId');
+      const friendName = params.get('name');
+      if (!friendId) { window.location.href = 'friends.html'; return; }
+      if (friendName) Vilue_Utils.qs('#chat-title').textContent = decodeURIComponent(friendName);
+
+      const user = await Vilue_Auth.loadSession();
+      currentUserId = user ? user.id : null;
+
+      await loadMessages();
+      // Polling refresh — no WebSockets, so new messages appear every few seconds.
+      setInterval(loadMessages, 4000);
+
+      Vilue_Utils.qs('#chat-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = Vilue_Utils.qs('#chat-input');
+        const content = input.value.trim();
+        if (!content) return;
+        input.value = '';
+        try {
+          await Vilue_Messages.sendText(friendId, content);
+          loadMessages();
+        } catch (err) {
+          Vilue_Utils.showToast(err.message, 'error');
+        }
+      });
+
+      const giftPicker = Vilue_Utils.qs('#gift-picker');
+      Vilue_Utils.qs('#gift-btn').addEventListener('click', async () => {
+        if (giftPicker.style.display === 'block') { giftPicker.style.display = 'none'; return; }
+        try {
+          const { catalog } = await Vilue_Messages.getGiftCatalog();
+          Vilue_Utils.qs('#gift-options').innerHTML = Object.entries(catalog).map(([type, price]) => `
+            <button type="button" class="gift-option" data-gift="${type}">
+              <span class="emoji">${(GIFT_LABELS[type] || {}).emoji || '🎁'}</span>
+              ${(GIFT_LABELS[type] || {}).name || type}<br>${Vilue_Utils.formatSlon(price)} سلون
+            </button>`).join('');
+          giftPicker.style.display = 'block';
+
+          Vilue_Utils.qsa('[data-gift]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              btn.disabled = true;
+              try {
+                await Vilue_Messages.sendGift(friendId, btn.dataset.gift, 1);
+                giftPicker.style.display = 'none';
+                loadMessages();
+              } catch (err) {
+                Vilue_Utils.showToast(
+                  err.code === 'INSUFFICIENT_BALANCE' ? 'رصيدك غير كافٍ لإرسال هذي الهدية' : err.message,
+                  'error'
+                );
+              } finally {
+                btn.disabled = false;
+              }
+            });
+          });
+        } catch (err) {
+          Vilue_Utils.showToast(err.message, 'error');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

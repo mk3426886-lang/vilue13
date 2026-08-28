@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | المتجر</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/marketplace.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <img class="brand-mark" src="../assets/icons/logo-mark.svg" alt="Vilue" width="30" height="30" style="border-radius:9px;">
+        المتجر
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="mkt-tabs">
+        <button class="mkt-tab is-active" data-tab="browse">تصفح</button>
+        <button class="mkt-tab" data-tab="mine">إعلاناتي</button>
+        <button class="mkt-tab" data-tab="purchases">مشترياتي</button>
+      </div>
+
+      <div id="panel-browse">
+        <div id="browse-grid" class="mkt-grid"></div>
+      </div>
+
+      <div id="panel-mine" style="display:none;">
+        <div id="mine-list"></div>
+      </div>
+
+      <div id="panel-purchases" style="display:none;">
+        <div id="purchases-list"></div>
+      </div>
+    </div>
+
+    <a class="mkt-fab" href="sell.html" aria-label="Add listing">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </a>
+
+    <nav class="bottom-nav">
+      <a href="home.html">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5M6 10v9h12v-9" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        الرئيسية
+      </a>
+      <a href="wallet.html">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M16 13h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        المحفظة
+      </a>
+      <a href="friends.html">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.8"/><path d="M16 11l1.5 1.5L21 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        الأصدقاء
+      </a>
+      <a href="marketplace.html" class="is-active">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        المتجر
+      </a>
+      <a href="profile.html">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="currentColor" stroke-width="1.8"/></svg>
+        الحساب
+      </a>
+    </nav>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/marketplace.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const STATUS_LABELS = {
+      pending_review: 'قيد المراجعة', approved: 'منشور', rejected: 'مرفوض', sold: 'مباع', hidden: 'مخفي',
+    };
+    const STATUS_CLASS = {
+      pending_review: 'pending', approved: 'completed', rejected: 'pending', sold: 'completed', hidden: 'pending',
+    };
+
+    function productCardHtml(p) {
+      const img = p.image_url
+        ? `<img src="${p.image_url}" alt="">`
+        : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.5"/></svg>`;
+      return `
+        <a class="mkt-card" href="product.html?id=${p.id}" style="text-decoration:none; color:inherit;">
+          <div class="mkt-card-img">${img}</div>
+          <div class="mkt-card-body">
+            <div class="mkt-card-title">${p.title}</div>
+            <div class="mkt-card-price">${Vilue_Utils.formatSlon(p.price_slon)} سلون</div>
+          </div>
+        </a>`;
+    }
+
+    async function loadBrowse() {
+      const grid = Vilue_Utils.qs('#browse-grid');
+      grid.innerHTML = '<p class="empty-note">جارِ التحميل...</p>';
+      try {
+        const { products } = await Vilue_Marketplace.browse();
+        grid.innerHTML = products.length
+          ? products.map(productCardHtml).join('')
+          : '<p class="empty-note" style="grid-column:1/-1;">لا توجد منتجات معروضة حالياً.</p>';
+      } catch (err) {
+        grid.innerHTML = `<p class="empty-note" style="grid-column:1/-1;">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    async function loadMine() {
+      const container = Vilue_Utils.qs('#mine-list');
+      if (!Vilue_Auth.isAuthenticated()) {
+        container.innerHTML = '<p class="empty-note">سجّل الدخول لعرض إعلاناتك.</p>';
+        return;
+      }
+      container.innerHTML = '<p class="empty-note">جارِ التحميل...</p>';
+      try {
+        const { products } = await Vilue_Marketplace.mine();
+        container.innerHTML = products.length
+          ? products.map((p) => `
+            <div class="tx-row">
+              <div class="tx-icon neutral"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.5"/></svg></div>
+              <div class="tx-info">
+                <div class="tx-title">${p.title}</div>
+                <div class="tx-meta">${Vilue_Utils.formatSlon(p.price_slon)} سلون</div>
+              </div>
+              <span class="tx-status ${STATUS_CLASS[p.status]}">${STATUS_LABELS[p.status]}</span>
+            </div>`).join('')
+          : '<p class="empty-note">ما عندك أي إعلانات بعد.</p>';
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    async function loadPurchases() {
+      const container = Vilue_Utils.qs('#purchases-list');
+      if (!Vilue_Auth.isAuthenticated()) {
+        container.innerHTML = '<p class="empty-note">سجّل الدخول لعرض مشترياتك.</p>';
+        return;
+      }
+      container.innerHTML = '<p class="empty-note">جارِ التحميل...</p>';
+      try {
+        const { orders } = await Vilue_Marketplace.myPurchases();
+        container.innerHTML = orders.length
+          ? orders.map((o) => `
+            <div class="tx-row">
+              <div class="tx-icon out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.5"/></svg></div>
+              <div class="tx-info">
+                <div class="tx-title">${(o.marketplace_products && o.marketplace_products.title) || 'منتج'}</div>
+                <div class="tx-meta">${new Date(o.created_at).toLocaleDateString('ar-IQ')}</div>
+              </div>
+              <div class="tx-amount out">‎-${Vilue_Utils.formatSlon(o.price_slon)}</div>
+            </div>`).join('')
+          : '<p class="empty-note">ما سويت أي عملية شراء بعد.</p>';
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    document.addEventListener('vilue:app-ready', () => {
+      loadBrowse();
+
+      Vilue_Utils.qsa('.mkt-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          Vilue_Utils.qsa('.mkt-tab').forEach((t) => t.classList.remove('is-active'));
+          tab.classList.add('is-active');
+          ['browse', 'mine', 'purchases'].forEach((name) => {
+            Vilue_Utils.qs(`#panel-${name}`).style.display = name === tab.dataset.tab ? 'block' : 'none';
+          });
+          if (tab.dataset.tab === 'mine') loadMine();
+          if (tab.dataset.tab === 'purchases') loadPurchases();
+        });
+      });
+    });
+  </script>
+  <style>.empty-note { text-align: center; color: var(--color-text-muted); font-size: var(--fs-sm); padding: var(--sp-8) 0; }</style>
+</body>
+</html>

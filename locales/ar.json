@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "lang": "ar",
+    "dir": "rtl",
+    "name": "العربية"
+  },
+  "common": {
+    "appName": "فيليو",
+    "continue": "متابعة",
+    "back": "رجوع",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "loading": "جارِ التحميل...",
+    "or": "أو",
+    "required": "هذا الحقل مطلوب",
+    "slon": "سلون",
+    "iqd": "دينار عراقي"
+  },
+  "welcome": {
+    "tagline": "محفظتك الرقمية بلمسة عصرية",
+    "subtitle": "أرسل، استلم، وتسوّق داخل فيليو بأمان وسهولة تامة.",
+    "rate": "5 سلون = 1 دينار عراقي",
+    "login": "تسجيل الدخول",
+    "createAccount": "إنشاء حساب جديد"
+  },
+  "auth": {
+    "loginTitle": "مرحباً بعودتك",
+    "loginSubtitle": "سجّل الدخول للمتابعة إلى حسابك",
+    "identifierLabel": "المعرّف (12 رقم) أو البريد الإلكتروني",
+    "identifierPlaceholder": "أدخل معرّفك أو بريدك الإلكتروني",
+    "emailLabel": "البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "registerTitle": "إنشاء حساب جديد",
+    "registerSubtitle": "انضم إلى فيليو خلال دقيقة واحدة",
+    "nameLabel": "الاسم الكامل",
+    "namePlaceholder": "اكتب اسمك الكامل",
+    "contactLabel": "البريد الإلكتروني أو رقم الهاتف",
+    "contactPlaceholder": "أدخل بريدك الإلكتروني أو رقم هاتفك",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+    "countryLabel": "الدولة",
+    "governorateLabel": "المحافظة",
+    "governoratePlaceholder": "اختر المحافظة",
+    "termsPrefix": "أوافق على",
+    "termsLink": "الشروط والأحكام",
+    "and": "و",
+    "privacyLink": "سياسة الخصوصية",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "loginTab": "تسجيل الدخول",
+    "registerTab": "حساب جديد"
+  },
+  "verify": {
+    "title": "تحقق من حسابك",
+    "subtitle": "أدخل الرمز المكوّن من 6 أرقام المرسل إلى",
+    "resendPrompt": "لم يصلك الرمز؟",
+    "resendAction": "إعادة الإرسال",
+    "resendCooldown": "يمكنك إعادة الإرسال خلال {seconds} ثانية",
+    "verifyButton": "تأكيد",
+    "limitReached": "لقد تجاوزت الحد المسموح لطلب الرموز، حاول لاحقاً"
+  },
+  "settings": {
+    "language": "اللغة",
+    "languageSubtitle": "اختر لغة واجهة التطبيق"
+  },
+  "governorates": [
+    "بغداد", "البصرة", "نينوى", "أربيل", "النجف", "كربلاء", "الأنبار",
+    "ذي قار", "بابل", "ديالى", "كركوك", "واسط", "ميسان", "صلاح الدين",
+    "القادسية", "المثنى", "دهوك", "السليمانية"
+  ]
+}

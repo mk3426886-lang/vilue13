@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | المهام</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/marketplace.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <div class="auth-form-screen">
+    <div class="auth-form-top">
+      <button class="back-btn" type="button" onclick="history.back()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="auth-form-body">
+      <h1 class="auth-title">المهام</h1>
+      <p class="auth-subtitle">انشر مهمة "انضمام لقناة تليكرام" وادفع مكافأة لكل عضو ينضم ويبقى</p>
+
+      <div id="telegram-link-card" class="card" style="margin-bottom: var(--sp-5);">
+        <p style="font-size: var(--fs-xs); color: var(--color-text-muted);">جارِ التحقق من ربط تليكرام...</p>
+      </div>
+
+      <div class="mkt-tabs">
+        <button class="mkt-tab is-active" data-tab="create">إنشاء مهمة</button>
+        <button class="mkt-tab" data-tab="mine">مهامي</button>
+        <button class="mkt-tab" data-tab="browse">تصفح المهام</button>
+      </div>
+
+      <div id="panel-create">
+        <form id="task-form" novalidate>
+          <div class="field">
+            <label class="field-label" for="channelUsername">معرّف القناة (يبدأ بـ @)</label>
+            <input class="field-input" id="channelUsername" type="text" placeholder="@my_channel" dir="ltr" required>
+          </div>
+          <div class="field">
+            <label class="field-label" for="rewardPerJoin">المكافأة لكل عضو (سلون، 40 كحد أدنى)</label>
+            <input class="field-input" id="rewardPerJoin" type="number" min="40" step="1" placeholder="40" required>
+          </div>
+          <div class="field">
+            <label class="field-label" for="targetJoins">عدد الأعضاء المستهدف (1,000 - 100,000)</label>
+            <input class="field-input" id="targetJoins" type="number" min="1000" max="100000" step="1" placeholder="1000" required>
+          </div>
+          <div class="card" id="cost-preview" style="margin-bottom: var(--sp-4); text-align:center; font-weight:700; color: var(--color-primary);">
+            التكلفة الكاملة: —
+          </div>
+          <button type="submit" class="btn btn-primary" id="submit-btn">نشر المهمة للمراجعة</button>
+        </form>
+      </div>
+
+      <div id="panel-mine" style="display:none;"><p class="empty-note">جارِ التحميل...</p></div>
+      <div id="panel-browse" style="display:none;"><p class="empty-note">جارِ التحميل...</p></div>
+    </div>
+  </div>
+
+  <style>.empty-note { text-align: center; color: var(--color-text-muted); font-size: var(--fs-sm); padding: var(--sp-8) 0; }</style>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/tasks.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const STATUS_LABELS = {
+      pending_review: 'قيد المراجعة', active: 'نشطة', completed: 'مكتملة', cancelled: 'ملغاة', rejected: 'مرفوضة',
+    };
+    const STATUS_CLASS = {
+      pending_review: 'pending', active: 'completed', completed: 'completed', cancelled: 'pending', rejected: 'pending',
+    };
+
+    async function loadTelegramLinkCard() {
+      const card = Vilue_Utils.qs('#telegram-link-card');
+      try {
+        const status = await Vilue_Tasks.linkStatus();
+        if (status.linked) {
+          card.innerHTML = `<p style="font-size: var(--fs-sm); font-weight:700; color: var(--c-success);">✓ حساب تليكرام مربوط (@${status.telegramUsername || '—'})</p>`;
+        } else {
+          card.innerHTML = `
+            <p style="font-size: var(--fs-sm); font-weight:700; margin-bottom:8px;">اربط حساب تليكرام أول (مطلوب لنشر أو المشاركة بالمهام)</p>
+            <button class="btn-sm btn-primary" id="generate-code-btn" style="border-radius:10px;">توليد رمز الربط</button>
+            <div id="link-instructions" style="display:none; margin-top:10px; font-size:12px; color:var(--color-text-muted);"></div>
+          `;
+          Vilue_Utils.qs('#generate-code-btn').addEventListener('click', async () => {
+            try {
+              const result = await Vilue_Tasks.generateLinkCode();
+              const box = Vilue_Utils.qs('#link-instructions');
+              box.style.display = 'block';
+              box.innerHTML = result.botUsername
+                ? `افتح <strong>@${result.botUsername}</strong> بتليكرام وأرسل: <br><code dir="ltr" style="background:var(--c-bg-field); padding:4px 8px; border-radius:6px; display:inline-block; margin-top:4px;">/start ${result.code}</code>`
+                : `الرمز: <code>${result.code}</code> (بوت فيليو غير مُعد بعد من الإدارة)`;
+            } catch (err) {
+              Vilue_Utils.showToast(err.message, 'error');
+            }
+          });
+        }
+      } catch (err) {
+        card.innerHTML = `<p class="empty-note">تعذّر التحقق من حالة الربط</p>`;
+      }
+    }
+
+    function updateCostPreview() {
+      const reward = Number(Vilue_Utils.qs('#rewardPerJoin').value) || 0;
+      const target = Number(Vilue_Utils.qs('#targetJoins').value) || 0;
+      Vilue_Utils.qs('#cost-preview').textContent = `التكلفة الكاملة: ${Vilue_Utils.formatSlon(reward * target)} سلون`;
+    }
+
+    function taskCardHtml(t, showCancel) {
+      return `
+        <div class="admin-card" data-task-id="${t.id}">
+          <div class="admin-card-head">
+            <div>
+              <div class="admin-user-name" dir="ltr">${t.channel_username}</div>
+              <div class="admin-user-sub">${Vilue_Utils.formatSlon(t.reward_per_join_slon)} سلون / عضو</div>
+            </div>
+            <span class="tx-status ${STATUS_CLASS[t.status] || 'pending'}">${STATUS_LABELS[t.status] || t.status}</span>
+          </div>
+          <div class="admin-row"><span>التقدم</span><strong>${t.joins_count} / ${t.target_joins}</strong></div>
+          ${showCancel && (t.status === 'active' || t.status === 'pending_review') ? `<button class="btn-sm admin-reject" data-cancel-task="${t.id}" style="margin-top:8px;">إلغاء واسترجاع الباقي</button>` : ''}
+        </div>`;
+    }
+
+    async function loadMine() {
+      const container = Vilue_Utils.qs('#panel-mine');
+      try {
+        const { tasks } = await Vilue_Tasks.mine();
+        container.innerHTML = tasks.length ? tasks.map((t) => taskCardHtml(t, true)).join('') : '<p class="empty-note">ما نشرت أي مهمة بعد.</p>';
+        container.querySelectorAll('[data-cancel-task]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('إلغاء المهمة واسترجاع المبلغ غير المستخدم؟')) return;
+            try {
+              await Vilue_Tasks.cancel(btn.dataset.cancelTask);
+              Vilue_Utils.showToast('تم الإلغاء واسترجاع المبلغ', 'success');
+              loadMine();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    async function loadBrowse() {
+      const container = Vilue_Utils.qs('#panel-browse');
+      try {
+        const { tasks } = await Vilue_Tasks.browse();
+        container.innerHTML = tasks.length
+          ? tasks.map((t) => `
+            <div class="admin-card">
+              <div class="admin-card-head">
+                <div class="admin-user-name" dir="ltr">${t.channel_username}</div>
+                <div class="admin-amount">${Vilue_Utils.formatSlon(t.reward_per_join_slon)} سلون</div>
+              </div>
+              <div class="admin-row"><span>التقدم</span><strong>${t.joins_count} / ${t.target_joins}</strong></div>
+              <p style="font-size:11px; color:var(--color-text-muted); margin-top:6px;">انضم للقناة وابقَ فيها لتحصل على المكافأة تلقائياً. مغادرة القناة تخصم نفس المبلغ.</p>
+            </div>`).join('')
+          : '<p class="empty-note">لا توجد مهام متاحة حالياً.</p>';
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    document.addEventListener('vilue:app-ready', () => {
+      if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+      loadTelegramLinkCard();
+
+      Vilue_Utils.qs('#rewardPerJoin').addEventListener('input', updateCostPreview);
+      Vilue_Utils.qs('#targetJoins').addEventListener('input', updateCostPreview);
+
+      Vilue_Utils.qsa('.mkt-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          Vilue_Utils.qsa('.mkt-tab').forEach((t) => t.classList.remove('is-active'));
+          tab.classList.add('is-active');
+          ['create', 'mine', 'browse'].forEach((name) => {
+            Vilue_Utils.qs(`#panel-${name}`).style.display = name === tab.dataset.tab ? 'block' : 'none';
+          });
+          if (tab.dataset.tab === 'mine') loadMine();
+          if (tab.dataset.tab === 'browse') loadBrowse();
+        });
+      });
+
+      Vilue_Utils.qs('#task-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = Vilue_Utils.qs('#submit-btn');
+        const channelUsername = Vilue_Utils.qs('#channelUsername').value.trim();
+        const rewardPerJoin = Number(Vilue_Utils.qs('#rewardPerJoin').value);
+        const targetJoins = Number(Vilue_Utils.qs('#targetJoins').value);
+
+        if (!/^@[\w\d_]{5,32}$/.test(channelUsername)) {
+          Vilue_Utils.showToast('اكتب معرّف القناة صحيح، يبدأ بـ @', 'error');
+          return;
+        }
+        if (!rewardPerJoin || rewardPerJoin < 40) {
+          Vilue_Utils.showToast('المكافأة لازم تكون 40 سلون على الأقل', 'error');
+          return;
+        }
+        if (!targetJoins || targetJoins < 1000 || targetJoins > 100000) {
+          Vilue_Utils.showToast('العدد المستهدف بين 1000 و100000', 'error');
+          return;
+        }
+
+        Vilue_Utils.setLoading(submitBtn, true);
+        try {
+          await Vilue_Tasks.create({ channelUsername, rewardPerJoin, targetJoins });
+          Vilue_Utils.showToast('تم إرسال المهمة للمراجعة', 'success');
+          Vilue_Utils.qs('#task-form').reset();
+          updateCostPreview();
+        } catch (err) {
+          const messages = {
+            TELEGRAM_NOT_LINKED: 'اربط حساب تليكرام أول من الأعلى',
+            INSUFFICIENT_BALANCE: 'رصيدك غير كافٍ لتغطية تكلفة المهمة كاملة',
+            REWARD_TOO_LOW: 'المكافأة لازم تكون 40 سلون على الأقل',
+            INVALID_TARGET: 'العدد المستهدف بين 1000 و100000',
+          };
+          Vilue_Utils.showToast(messages[err.code] || err.message, 'error');
+        } finally {
+          Vilue_Utils.setLoading(submitBtn, false);
+          submitBtn.textContent = 'نشر المهمة للمراجعة';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

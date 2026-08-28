@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue Admin | لوحة التحكم</title>
+  <link rel="stylesheet" href="../../css/main.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/admin.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+</head>
+<body>
+
+  <div class="admin-shell">
+    <header class="admin-topbar">
+      <div class="topbar-brand">
+        <img class="brand-mark" src="../../assets/icons/logo-mark.svg" alt="Vilue" width="30" height="30" style="border-radius:9px;">
+        لوحة تحكم فيليو
+      </div>
+      <button class="btn-sm btn-outline" id="logout-btn">تسجيل الخروج</button>
+    </header>
+
+    <div style="padding: var(--sp-3) var(--sp-5) 0;">
+      <a href="../../pages/home.html" class="btn-sm btn-outline" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        رجوع للتطبيق
+      </a>
+    </div>
+
+    <nav class="admin-tabs">
+      <button class="admin-tab is-active" data-tab="deposits">الإيداعات <span class="tab-badge" id="badge-deposits"></span></button>
+      <button class="admin-tab" data-tab="withdrawals">السحوبات <span class="tab-badge" id="badge-withdrawals"></span></button>
+      <button class="admin-tab" data-tab="marketplace">المتجر <span class="tab-badge" id="badge-marketplace"></span></button>
+      <button class="admin-tab" data-tab="tasks-admin">المهام <span class="tab-badge" id="badge-tasks"></span></button>
+      <button class="admin-tab" data-tab="users">المستخدمون</button>
+      <button class="admin-tab" data-tab="support">الدعم <span class="tab-badge" id="badge-support"></span></button>
+      <button class="admin-tab" data-tab="notify">الإشعارات</button>
+      <button class="admin-tab" data-tab="settings">الإعدادات والعمولات</button>
+    </nav>
+
+    <main class="container admin-content">
+
+      <div class="admin-card" style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:700; font-size:13px; color:var(--color-text-muted);">رصيد محفظة المنصة (العمولات المحصّلة)</span>
+        <strong id="platform-balance" style="color:var(--color-primary); font-size:16px;">—</strong>
+      </div>
+
+      <section id="panel-deposits" class="admin-panel">
+        <div id="deposits-list"><p class="empty-note">جارِ التحميل...</p></div>
+      </section>
+
+      <section id="panel-withdrawals" class="admin-panel" style="display:none;">
+        <div id="withdrawals-list"><p class="empty-note">جارِ التحميل...</p></div>
+      </section>
+
+      <section id="panel-users" class="admin-panel" style="display:none;">
+        <div id="users-list"><p class="empty-note">جارِ التحميل...</p></div>
+      </section>
+
+      <section id="panel-marketplace" class="admin-panel" style="display:none;">
+        <div class="admin-card">
+          <div style="font-weight:800; margin-bottom: var(--sp-3);">نشر منتج رسمي من فيليو</div>
+          <form id="admin-listing-form">
+            <div class="field">
+              <input class="field-input" id="admin-title" placeholder="عنوان المنتج" required>
+            </div>
+            <div class="field">
+              <input class="field-input" id="admin-price" type="number" min="1" placeholder="السعر (سلون)" required>
+            </div>
+            <div class="field">
+              <input class="field-input" id="admin-category" placeholder="التصنيف (اختياري)">
+            </div>
+            <button type="submit" class="btn-sm btn-primary" style="width:100%; border-radius:12px; padding:10px;">نشر المنتج (بدون مراجعة، فوري)</button>
+          </form>
+        </div>
+        <div id="marketplace-pending-list"><p class="empty-note">جارِ التحميل...</p></div>
+      </section>
+
+      <section id="panel-support" class="admin-panel" style="display:none;">
+        <div id="support-list"><p class="empty-note">جارِ التحميل...</p></div>
+      </section>
+
+      <section id="panel-tasks-admin" class="admin-panel" style="display:none;">
+        <div id="tasks-pending-list"><p class="empty-note">جارِ التحميل...</p></div>
+      </section>
+
+      <section id="panel-notify" class="admin-panel" style="display:none;">
+        <div class="admin-card">
+          <div style="font-weight:800; margin-bottom: var(--sp-3);">إرسال إشعار</div>
+          <form id="notify-form">
+            <div class="field">
+              <input class="field-input" id="notify-userid" placeholder="معرّف مستخدم محدد (اتركه فارغاً للإرسال للجميع)" dir="ltr">
+            </div>
+            <div class="field">
+              <input class="field-input" id="notify-title" placeholder="عنوان الإشعار" required>
+            </div>
+            <div class="field">
+              <input class="field-input" id="notify-body" placeholder="نص الإشعار (اختياري)">
+            </div>
+            <button type="submit" class="btn-sm btn-primary" style="width:100%; border-radius:12px; padding:10px;">إرسال</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="panel-settings" class="admin-panel" style="display:none;">
+        <form id="settings-form">
+          <div class="admin-card">
+            <div class="settings-row">
+              <label>سعر الصرف (سلون لكل دينار عراقي)</label>
+              <input type="number" step="0.01" id="set-slon_per_iqd" class="field-input">
+            </div>
+            <div class="settings-row">
+              <label>سعر USDT بالدينار العراقي</label>
+              <input type="number" step="0.01" id="set-usdt_to_iqd" class="field-input">
+            </div>
+          </div>
+          <div class="admin-card">
+            <div style="font-weight:800; margin-bottom: var(--sp-3);">شريط الأخبار والبانر الترويجي</div>
+            <div class="field">
+              <label class="field-label">نص شريط الأخبار</label>
+              <input class="field-input" id="set-news_ticker_text" placeholder="مثال: تحديث جديد على فيليو 🎉">
+            </div>
+            <div class="field">
+              <label class="field-label">نص البانر الترويجي</label>
+              <input class="field-input" id="set-promo_banner_text" placeholder="نص يظهر فوق صورة البانر">
+            </div>
+            <div class="field">
+              <label class="field-label">صورة البانر</label>
+              <input type="file" accept="image/*" id="banner-image-input">
+              <span class="field-hint" id="banner-current-url"></span>
+            </div>
+          </div>
+          <div class="admin-card">
+            <div class="settings-row">
+              <label>عمولة السحب</label>
+              <div class="fee-input-group">
+                <select id="set-withdrawal_fee_type" class="field-select fee-type-select">
+                  <option value="percent">%</option>
+                  <option value="fixed">سلون ثابت</option>
+                </select>
+                <input type="number" step="0.01" id="set-withdrawal_fee_value" class="field-input">
+              </div>
+            </div>
+            <div class="settings-row">
+              <label>عمولة التحويل</label>
+              <div class="fee-input-group">
+                <select id="set-transfer_fee_type" class="field-select fee-type-select">
+                  <option value="percent">%</option>
+                  <option value="fixed">سلون ثابت</option>
+                </select>
+                <input type="number" step="0.01" id="set-transfer_fee_value" class="field-input">
+              </div>
+            </div>
+            <div class="settings-row">
+              <label>عمولة الإيداع</label>
+              <div class="fee-input-group">
+                <select id="set-deposit_fee_type" class="field-select fee-type-select">
+                  <option value="percent">%</option>
+                  <option value="fixed">سلون ثابت</option>
+                </select>
+                <input type="number" step="0.01" id="set-deposit_fee_value" class="field-input">
+              </div>
+            </div>
+          </div>
+          <div class="admin-card">
+            <div class="settings-row">
+              <label>عمولة الهدايا</label>
+              <div class="fee-input-group">
+                <select id="set-gift_commission_type" class="field-select fee-type-select">
+                  <option value="percent">%</option>
+                  <option value="fixed">سلون ثابت</option>
+                </select>
+                <input type="number" step="0.01" id="set-gift_commission_value" class="field-input">
+              </div>
+            </div>
+            <div class="settings-row">
+              <label>رسوم إدراج بالمتجر (سلون)</label>
+              <input type="number" step="1" id="set-marketplace_listing_fee_slon" class="field-input">
+            </div>
+            <div class="settings-row">
+              <label>عمولة المتجر</label>
+              <div class="fee-input-group">
+                <select id="set-marketplace_commission_type" class="field-select fee-type-select">
+                  <option value="percent">%</option>
+                  <option value="fixed">سلون ثابت</option>
+                </select>
+                <input type="number" step="0.01" id="set-marketplace_commission_value" class="field-input">
+              </div>
+            </div>
+            <div class="settings-row">
+              <label>عمولة مهام تليكرام</label>
+              <div class="fee-input-group">
+                <select id="set-task_commission_type" class="field-select fee-type-select">
+                  <option value="percent">%</option>
+                  <option value="fixed">سلون ثابت</option>
+                </select>
+                <input type="number" step="0.01" id="set-task_commission_value" class="field-input">
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="save-settings-btn">حفظ الإعدادات</button>
+        </form>
+      </section>
+
+    </main>
+
+    <div id="user-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(11,19,48,0.5); z-index:100; align-items:center; justify-content:center; padding:20px;">
+      <div style="background:var(--c-white); border-radius:var(--radius-lg); max-width:480px; width:100%; max-height:85vh; overflow-y:auto; padding:var(--sp-5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-4);">
+          <div style="font-weight:800; font-size:16px;">تفاصيل الحساب</div>
+          <button id="close-modal-btn" style="all:unset; cursor:pointer; font-size:20px;">×</button>
+        </div>
+        <div id="user-modal-body"><p class="empty-note">جارِ التحميل...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .settings-row { display:flex; justify-content:space-between; align-items:center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+    .settings-row label { font-size: 13px; font-weight:700; color: var(--color-text); flex:1; }
+    .settings-row input { width: 130px; text-align:center; }
+    .fee-input-group { display:flex; gap:6px; }
+    .fee-input-group .fee-type-select { width: 90px; padding: 8px 6px; font-size: 12px; border-radius: var(--radius-sm); border:1.5px solid var(--color-border); background:var(--c-white); }
+    .fee-input-group input { width: 90px; }
+  </style>
+
+  <script src="../../js/i18n.js"></script>
+  <script src="../../js/utils.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/admin.js"></script>
+  <script src="../../js/marketplace.js"></script>
+  <script src="../../js/notifications.js"></script>
+  <script src="../../js/app.js"></script>
+  <script>
+    function reviewCardHtml(tx, type) {
+      const methodLabels = { zaincash: 'زين كاش', superqi: 'سوبر كي', mastercard: 'ماستركارد' };
+      const u = tx.users || {};
+      const method = tx.meta && tx.meta.method ? (methodLabels[tx.meta.method] || tx.meta.method) : '—';
+      const extra = type === 'deposit'
+        ? `<div class="admin-row"><span>اسم المُرسِل</span><strong>${(tx.meta && tx.meta.sender_account_name) || '—'}</strong></div>`
+        : `<div class="admin-row"><span>رقم الاستلام</span><strong dir="ltr">${(tx.meta && tx.meta.phone) || '—'}</strong></div>`;
+
+      return `
+        <div class="admin-card" data-tx-id="${tx.id}">
+          <div class="admin-card-head">
+            <div>
+              <div class="admin-user-name">${u.name || '—'} <span class="admin-user-id">#${u.display_user_id || ''}</span></div>
+              <div class="admin-user-sub">${u.email || ''}</div>
+            </div>
+            <div class="admin-amount">${Vilue_Utils.formatSlon(tx.amount_slon)} سلون</div>
+          </div>
+          <div class="admin-row"><span>الطريقة</span><strong>${method}</strong></div>
+          ${extra}
+          <div class="admin-row"><span>الوقت</span><strong>${new Date(tx.created_at).toLocaleString('ar-IQ')}</strong></div>
+          <div class="admin-actions">
+            <button class="btn-sm admin-approve">قبول</button>
+            <button class="btn-sm admin-reject">رفض</button>
+          </div>
+        </div>`;
+    }
+
+    async function loadDeposits() {
+      const container = Vilue_Utils.qs('#deposits-list');
+      try {
+        const { deposits } = await Vilue_Admin.listPendingDeposits();
+        Vilue_Utils.qs('#badge-deposits').textContent = deposits.length || '';
+        container.innerHTML = deposits.length
+          ? deposits.map((d) => reviewCardHtml(d, 'deposit')).join('')
+          : '<p class="empty-note">لا توجد طلبات إيداع بانتظار المراجعة.</p>';
+        wireActions(container, 'deposit');
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    async function loadWithdrawals() {
+      const container = Vilue_Utils.qs('#withdrawals-list');
+      try {
+        const { withdrawals } = await Vilue_Admin.listPendingWithdrawals();
+        Vilue_Utils.qs('#badge-withdrawals').textContent = withdrawals.length || '';
+        container.innerHTML = withdrawals.length
+          ? withdrawals.map((w) => reviewCardHtml(w, 'withdrawal')).join('')
+          : '<p class="empty-note">لا توجد طلبات سحب بانتظار المراجعة.</p>';
+        wireActions(container, 'withdrawal');
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    function wireActions(container, type) {
+      container.querySelectorAll('.admin-card').forEach((card) => {
+        const txId = card.dataset.txId;
+        card.querySelector('.admin-approve').addEventListener('click', () => reviewTx(type, txId, 'approve'));
+        card.querySelector('.admin-reject').addEventListener('click', () => reviewTx(type, txId, 'reject'));
+      });
+    }
+
+    async function reviewTx(type, txId, action) {
+      try {
+        if (type === 'deposit') await Vilue_Admin.reviewDeposit(txId, action);
+        else await Vilue_Admin.reviewWithdrawal(txId, action);
+        Vilue_Utils.showToast(action === 'approve' ? 'تمت الموافقة' : 'تم الرفض', 'success');
+        if (type === 'deposit') loadDeposits(); else loadWithdrawals();
+      } catch (err) {
+        Vilue_Utils.showToast(err.message, 'error');
+      }
+    }
+
+    let currentIsOwner = false;
+
+    async function loadUsers() {
+      const container = Vilue_Utils.qs('#users-list');
+      try {
+        const { users } = await Vilue_Admin.listUsers();
+        container.innerHTML = users.map((u) => {
+          const badge = u.is_owner ? 'owner' : (u.is_admin ? 'admin' : u.verification_badge);
+          const badgeHtml = Vilue_Utils.badgeHtml(badge);
+          let actions = `<button class="btn-sm" data-details="${u.id}">تفاصيل الحساب</button>`;
+
+          if (!u.is_owner) {
+            if (!u.is_admin) {
+              actions += `<button class="btn-sm ${u.verification_badge === 'verified' ? 'admin-reject' : 'admin-approve'}" data-verify="${u.id}" data-value="${u.verification_badge !== 'verified'}">
+                ${u.verification_badge === 'verified' ? 'إلغاء التوثيق' : 'توثيق الحساب'}
+              </button>`;
+            }
+            if (currentIsOwner) {
+              actions += u.is_admin
+                ? `<button class="btn-sm admin-reject" data-demote="${u.id}">إلغاء صلاحية الأدمن</button>`
+                : `<button class="btn-sm admin-approve" data-promote="${u.id}">ترقية لأدمن</button>`;
+            }
+            actions += u.is_suspended
+              ? `<button class="btn-sm" data-unban="${u.id}">إلغاء الإيقاف</button>`
+              : `<button class="btn-sm admin-reject" data-ban="${u.id}" data-name="${u.name}">حظر الحساب</button>`;
+            actions += `<button class="btn-sm admin-reject" data-delete="${u.id}" data-name="${u.name}">حذف نهائي</button>`;
+          }
+          actions += `<button class="btn-sm" data-edit-id="${u.id}" data-current="${u.display_user_id}">تعديل المعرّف</button>`;
+
+          return `
+          <div class="admin-card">
+            <div class="admin-card-head">
+              <div>
+                <div class="admin-user-name">${u.name} ${badgeHtml} <span class="admin-user-id">#${u.display_user_id}</span></div>
+                <div class="admin-user-sub">${u.email}</div>
+              </div>
+              ${u.is_suspended ? '<span class="tx-status pending">موقوف</span>' : '<span class="tx-status completed">نشط</span>'}
+            </div>
+            <div class="admin-row"><span>المحافظة</span><strong>${u.governorate || '—'}</strong></div>
+            <div class="admin-row"><span>موثّق البريد</span><strong>${u.is_verified ? 'نعم' : 'لا'}</strong></div>
+            <div class="admin-actions" style="flex-wrap:wrap;">${actions}</div>
+          </div>
+        `;
+        }).join('');
+
+        container.querySelectorAll('[data-details]').forEach((btn) => {
+          btn.addEventListener('click', () => openUserDetails(btn.dataset.details));
+        });
+        container.querySelectorAll('[data-unban]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              await Vilue_Api.request(`/admin/users/${btn.dataset.unban}/unban`, { method: 'POST', headers: Vilue_Auth.authHeader() });
+              Vilue_Utils.showToast('تم إلغاء الإيقاف', 'success');
+              loadUsers();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-ban]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const reason = prompt(`سبب حظر "${btn.dataset.name}"؟`);
+            if (reason === null) return;
+            const durationInput = prompt('مدة الحظر بالساعات؟ (اتركه فارغاً لحظر دائم)');
+            const durationHours = durationInput && durationInput.trim() ? Number(durationInput.trim()) : null;
+            try {
+              await Vilue_Api.request(`/admin/users/${btn.dataset.ban}/ban`, {
+                method: 'POST', headers: Vilue_Auth.authHeader(), body: { reason, durationHours },
+              });
+              Vilue_Utils.showToast('تم حظر الحساب', 'success');
+              loadUsers();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-delete]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            if (!confirm(`حذف حساب "${btn.dataset.name}" نهائياً؟ يمكن إنشاء حساب جديد بنفس الإيميل بعدها.`)) return;
+            try {
+              await Vilue_Api.request(`/admin/users/${btn.dataset.delete}`, { method: 'DELETE', headers: Vilue_Auth.authHeader() });
+              Vilue_Utils.showToast('تم حذف الحساب', 'success');
+              loadUsers();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-edit-id]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const newId = prompt('المعرّف الجديد (6-12 رقم):', btn.dataset.current);
+            if (!newId || !/^\d{6,12}$/.test(newId.trim())) {
+              if (newId !== null) Vilue_Utils.showToast('معرّف غير صحيح', 'error');
+              return;
+            }
+            try {
+              await Vilue_Api.request(`/admin/users/${btn.dataset.editId}/display-id`, {
+                method: 'PATCH', headers: Vilue_Auth.authHeader(), body: { newId: newId.trim() },
+              });
+              Vilue_Utils.showToast('تم تعديل المعرّف', 'success');
+              loadUsers();
+            } catch (err) {
+              Vilue_Utils.showToast(err.code === 'ID_ALREADY_USED' ? 'هذا المعرّف مستخدم بالفعل' : err.message, 'error');
+            }
+          });
+        });
+        container.querySelectorAll('[data-verify]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              await Vilue_Admin.setVerificationBadge(btn.dataset.verify, btn.dataset.value === 'true');
+              Vilue_Utils.showToast('تم التحديث', 'success');
+              loadUsers();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-promote]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              await Vilue_Admin.promoteToAdmin(btn.dataset.promote);
+              Vilue_Utils.showToast('تمت الترقية لأدمن', 'success');
+              loadUsers();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-demote]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              await Vilue_Admin.demoteAdmin(btn.dataset.demote);
+              Vilue_Utils.showToast('تم إلغاء صلاحية الأدمن', 'success');
+              loadUsers();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    async function loadMarketplacePending() {
+      const container = Vilue_Utils.qs('#marketplace-pending-list');
+      try {
+        const { products } = await Vilue_Marketplace.adminListPending();
+        Vilue_Utils.qs('#badge-marketplace').textContent = products.length || '';
+        container.innerHTML = products.length
+          ? products.map((p) => `
+            <div class="admin-card" data-product-id="${p.id}">
+              <div class="admin-card-head">
+                <div>
+                  <div class="admin-user-name">${p.title}</div>
+                  <div class="admin-user-sub">${(p.users && p.users.name) || '—'} · #${(p.users && p.users.display_user_id) || ''}</div>
+                </div>
+                <div class="admin-amount">${Vilue_Utils.formatSlon(p.price_slon)} سلون</div>
+              </div>
+              <div class="admin-row"><span>رسوم الإدراج المدفوعة</span><strong>${Vilue_Utils.formatSlon(p.listing_fee_slon)} سلون</strong></div>
+              <div class="admin-row"><span>الوصف</span><strong>${p.description || '—'}</strong></div>
+              <div class="admin-actions">
+                <button class="btn-sm admin-approve" data-mkt-approve>قبول</button>
+                <button class="btn-sm admin-reject" data-mkt-reject>رفض</button>
+              </div>
+            </div>`).join('')
+          : '<p class="empty-note">لا توجد إعلانات بانتظار المراجعة.</p>';
+
+        container.querySelectorAll('[data-mkt-approve]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.closest('[data-product-id]').dataset.productId;
+            try {
+              await Vilue_Marketplace.adminReview(id, 'approve');
+              Vilue_Utils.showToast('تم نشر المنتج', 'success');
+              loadMarketplacePending();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-mkt-reject]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.closest('[data-product-id]').dataset.productId;
+            try {
+              await Vilue_Marketplace.adminReview(id, 'reject');
+              Vilue_Utils.showToast('تم رفض الإعلان وإرجاع الرسوم', 'success');
+              loadMarketplacePending();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    Vilue_Utils.qs('#admin-listing-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = Vilue_Utils.qs('#admin-title').value.trim();
+      const price = Number(Vilue_Utils.qs('#admin-price').value);
+      const category = Vilue_Utils.qs('#admin-category').value.trim();
+      if (title.length < 3 || !price || price <= 0) {
+        Vilue_Utils.showToast('عبّي العنوان والسعر بشكل صحيح', 'error');
+        return;
+      }
+      try {
+        await Vilue_Marketplace.adminCreate({ title, priceSlon: price, category });
+        Vilue_Utils.showToast('تم نشر المنتج فوراً', 'success');
+        Vilue_Utils.qs('#admin-listing-form').reset();
+      } catch (err) {
+        Vilue_Utils.showToast(err.message, 'error');
+      }
+    });
+
+    async function loadPlatformWallet() {
+      try {
+        const w = await Vilue_Admin.getPlatformWallet();
+        Vilue_Utils.qs('#platform-balance').textContent = `${Vilue_Utils.formatSlon(w.balanceSlon)} سلون`;
+      } catch (err) {
+        Vilue_Utils.qs('#platform-balance').textContent = '—';
+      }
+    }
+
+    const SETTINGS_FIELDS = [
+      'slon_per_iqd', 'usdt_to_iqd',
+      'withdrawal_fee_type', 'withdrawal_fee_value',
+      'transfer_fee_type', 'transfer_fee_value',
+      'deposit_fee_type', 'deposit_fee_value',
+      'gift_commission_type', 'gift_commission_value',
+      'marketplace_listing_fee_slon',
+      'marketplace_commission_type', 'marketplace_commission_value',
+      'task_commission_type', 'task_commission_value',
+      'news_ticker_text', 'promo_banner_text', 'promo_banner_image_url',
+    ];
+    const TEXT_SETTINGS_FIELDS = new Set([
+      'withdrawal_fee_type', 'transfer_fee_type', 'deposit_fee_type', 'gift_commission_type', 'marketplace_commission_type', 'task_commission_type',
+      'news_ticker_text', 'promo_banner_text',
+    ]);
+
+    async function loadSettings() {
+      try {
+        const { settings } = await Vilue_Admin.getSettings();
+        SETTINGS_FIELDS.forEach((key) => {
+          const el = Vilue_Utils.qs(`#set-${key}`);
+          if (el && settings[key] !== undefined && settings[key] !== null) el.value = settings[key];
+        });
+        if (settings.promo_banner_image_url) {
+          Vilue_Utils.qs('#banner-current-url').textContent = 'صورة حالية مرفوعة ✓';
+        }
+      } catch (err) {
+        Vilue_Utils.showToast('تعذّر تحميل الإعدادات', 'error');
+      }
+    }
+
+    Vilue_Utils.qs('#settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = Vilue_Utils.qs('#save-settings-btn');
+      const fields = {};
+      SETTINGS_FIELDS.forEach((key) => {
+        const el = Vilue_Utils.qs(`#set-${key}`);
+        if (!el || el.value === '') return;
+        fields[key] = TEXT_SETTINGS_FIELDS.has(key) ? el.value : Number(el.value);
+      });
+      Vilue_Utils.setLoading(btn, true);
+      try {
+        await Vilue_Admin.updateSettings(fields);
+        Vilue_Utils.showToast('تم حفظ الإعدادات', 'success');
+      } catch (err) {
+        Vilue_Utils.showToast(err.message, 'error');
+      } finally {
+        Vilue_Utils.setLoading(btn, false);
+      }
+    });
+
+    Vilue_Utils.qs('#banner-image-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          await Vilue_Api.request('/admin/settings/banner-image', {
+            method: 'POST', headers: Vilue_Auth.authHeader(), body: { imageBase64: reader.result },
+          });
+          Vilue_Utils.showToast('تم رفع صورة البانر', 'success');
+          Vilue_Utils.qs('#banner-current-url').textContent = 'صورة حالية مرفوعة ✓';
+        } catch (err) {
+          Vilue_Utils.showToast(err.message, 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ---- User details modal ----
+    async function openUserDetails(userId) {
+      const overlay = Vilue_Utils.qs('#user-modal-overlay');
+      const body = Vilue_Utils.qs('#user-modal-body');
+      overlay.style.display = 'flex';
+      body.innerHTML = '<p class="empty-note">جارِ التحميل...</p>';
+      try {
+        const data = await Vilue_Api.request(`/admin/users/${userId}`, { headers: Vilue_Auth.authHeader() });
+        const u = data.user;
+        body.innerHTML = `
+          <div class="admin-row"><span>الاسم</span><strong>${u.name}</strong></div>
+          <div class="admin-row"><span>المعرّف</span><strong dir="ltr">${u.userId}</strong></div>
+          <div class="admin-row"><span>البريد</span><strong>${u.email}</strong></div>
+          <div class="admin-row"><span>المحافظة</span><strong>${u.governorate || '—'}</strong></div>
+          <div class="admin-row"><span>الرصيد</span><strong>${data.wallet ? Vilue_Utils.formatSlon(data.wallet.balanceSlon) + ' سلون' : '—'}</strong></div>
+          <div class="admin-row"><span>عدد الإعلانات بالمتجر</span><strong>${data.listings.length}</strong></div>
+          <div class="admin-row"><span>عدد الأصدقاء</span><strong>${data.friendCount}</strong></div>
+          <div class="admin-row"><span>تاريخ التسجيل</span><strong>${new Date(u.createdAt).toLocaleDateString('ar-IQ')}</strong></div>
+          ${u.isSuspended ? `<div class="admin-row"><span>سبب الإيقاف</span><strong>${u.banReason || '—'}</strong></div>` : ''}
+          <div class="section-header" style="margin-top:var(--sp-4);"><h2 style="font-size:13px;">آخر المعاملات</h2></div>
+          ${data.recentTransactions.length
+            ? data.recentTransactions.slice(0, 8).map((tx) => `
+              <div class="admin-row"><span>${tx.type} · ${new Date(tx.created_at).toLocaleDateString('ar-IQ')}</span><strong>${Vilue_Utils.formatSlon(tx.amount_slon)} سلون</strong></div>
+            `).join('')
+            : '<p class="empty-note">لا توجد معاملات</p>'}
+        `;
+      } catch (err) {
+        body.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+    Vilue_Utils.qs('#close-modal-btn').addEventListener('click', () => {
+      Vilue_Utils.qs('#user-modal-overlay').style.display = 'none';
+    });
+
+    // ---- Support tab ----
+    async function loadSupport() {
+      const container = Vilue_Utils.qs('#support-list');
+      try {
+        const { messages } = await Vilue_Api.request('/support/admin/all', { headers: Vilue_Auth.authHeader() });
+        Vilue_Utils.qs('#badge-support').textContent = messages.filter((m) => m.status === 'open').length || '';
+        container.innerHTML = messages.length
+          ? messages.map((m) => `
+            <div class="admin-card">
+              <div class="admin-card-head">
+                <div>
+                  <div class="admin-user-name">${(m.users && m.users.name) || '—'}</div>
+                  <div class="admin-user-sub">${(m.users && m.users.email) || ''}</div>
+                </div>
+                <span class="tx-status ${m.status === 'open' ? 'pending' : 'completed'}">${m.status === 'open' ? 'مفتوحة' : 'تم الرد'}</span>
+              </div>
+              <div class="admin-row" style="display:block;"><span>الرسالة:</span><br><strong>${m.message}</strong></div>
+              ${m.admin_reply ? `<div class="admin-row" style="display:block; margin-top:6px;"><span>ردك:</span><br><strong>${m.admin_reply}</strong></div>` : `
+                <div style="margin-top:8px; display:flex; gap:6px;">
+                  <input class="field-input" id="reply-${m.id}" placeholder="اكتب رداً..." style="flex:1;">
+                  <button class="btn-sm btn-primary" data-reply-btn="${m.id}" style="border-radius:10px;">إرسال</button>
+                </div>`}
+            </div>`).join('')
+          : '<p class="empty-note">لا توجد رسائل دعم بعد.</p>';
+
+        container.querySelectorAll('[data-reply-btn]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const input = Vilue_Utils.qs(`#reply-${btn.dataset.replyBtn}`);
+            const reply = input.value.trim();
+            if (!reply) return;
+            try {
+              await Vilue_Api.request(`/support/admin/${btn.dataset.replyBtn}/reply`, {
+                method: 'POST', headers: Vilue_Auth.authHeader(), body: { reply },
+              });
+              Vilue_Utils.showToast('تم إرسال الرد', 'success');
+              loadSupport();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    // ---- Notify tab ----
+    Vilue_Utils.qs('#notify-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userIdInput = Vilue_Utils.qs('#notify-userid').value.trim();
+      const title = Vilue_Utils.qs('#notify-title').value.trim();
+      const body = Vilue_Utils.qs('#notify-body').value.trim();
+      if (!title) { Vilue_Utils.showToast('اكتب عنوان الإشعار', 'error'); return; }
+      try {
+        await Vilue_Notifications.adminSend({ userId: userIdInput || null, title, body });
+        Vilue_Utils.showToast(userIdInput ? 'تم إرسال الإشعار' : 'تم الإرسال للجميع', 'success');
+        Vilue_Utils.qs('#notify-form').reset();
+      } catch (err) {
+        Vilue_Utils.showToast(err.message, 'error');
+      }
+    });
+
+    // ---- Tasks admin tab ----
+    async function loadTasksAdmin() {
+      const container = Vilue_Utils.qs('#tasks-pending-list');
+      try {
+        const { tasks } = await Vilue_Api.request('/tasks/admin/pending', { headers: Vilue_Auth.authHeader() });
+        Vilue_Utils.qs('#badge-tasks').textContent = tasks.length || '';
+        container.innerHTML = tasks.length
+          ? tasks.map((t) => `
+            <div class="admin-card" data-task-id="${t.id}">
+              <div class="admin-card-head">
+                <div>
+                  <div class="admin-user-name">${(t.users && t.users.name) || '—'}</div>
+                  <div class="admin-user-sub">${(t.users && t.users.email) || ''}</div>
+                </div>
+                <div class="admin-amount" dir="ltr">${t.channel_username}</div>
+              </div>
+              <div class="admin-row"><span>المكافأة لكل عضو</span><strong>${Vilue_Utils.formatSlon(t.reward_per_join_slon)} سلون</strong></div>
+              <div class="admin-row"><span>العدد المستهدف</span><strong>${Vilue_Utils.formatSlon(t.target_joins)}</strong></div>
+              <div class="admin-row"><span>إجمالي المبلغ المحجوز</span><strong>${Vilue_Utils.formatSlon(t.total_reserved_slon)} سلون</strong></div>
+              <div class="admin-actions">
+                <button class="btn-sm admin-approve" data-task-approve>قبول</button>
+                <button class="btn-sm admin-reject" data-task-reject>رفض</button>
+              </div>
+            </div>`).join('')
+          : '<p class="empty-note">لا توجد مهام بانتظار المراجعة.</p>';
+
+        container.querySelectorAll('[data-task-approve]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.closest('[data-task-id]').dataset.taskId;
+            try {
+              await Vilue_Api.request(`/tasks/admin/${id}/review`, { method: 'POST', headers: Vilue_Auth.authHeader(), body: { action: 'approve' } });
+              Vilue_Utils.showToast('تم نشر المهمة', 'success');
+              loadTasksAdmin();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-task-reject]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.closest('[data-task-id]').dataset.taskId;
+            try {
+              await Vilue_Api.request(`/tasks/admin/${id}/review`, { method: 'POST', headers: Vilue_Auth.authHeader(), body: { action: 'reject' } });
+              Vilue_Utils.showToast('تم رفض المهمة وإرجاع المبلغ', 'success');
+              loadTasksAdmin();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    document.addEventListener('vilue:app-ready', async () => {
+      if (!Vilue_Auth.isAuthenticated()) { window.location.href = '../../pages/login.html'; return; }
+      const user = await Vilue_Auth.loadSession();
+      if (!user || !user.isAdmin) {
+        Vilue_Utils.showToast('هذا الحساب ليس لديه صلاحية أدمن', 'error');
+        window.location.href = '../../pages/home.html';
+        return;
+      }
+      currentIsOwner = !!user.isOwner;
+
+      Vilue_Utils.qs('#logout-btn').addEventListener('click', () => {
+        Vilue_Auth.logout();
+        window.location.href = '../../pages/login.html';
+      });
+
+      Vilue_Utils.qsa('.admin-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          Vilue_Utils.qsa('.admin-tab').forEach((t) => t.classList.remove('is-active'));
+          tab.classList.add('is-active');
+          Vilue_Utils.qsa('.admin-panel').forEach((p) => { p.style.display = 'none'; });
+          Vilue_Utils.qs(`#panel-${tab.dataset.tab}`).style.display = 'block';
+        });
+      });
+
+      loadDeposits();
+      loadWithdrawals();
+      loadUsers();
+      loadSettings();
+      loadPlatformWallet();
+      loadMarketplacePending();
+      loadTasksAdmin();
+      loadSupport();
+    });
+  </script>
+</body>
+</html>

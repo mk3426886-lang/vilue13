@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | الأصدقاء</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/marketplace.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <img class="brand-mark" src="../assets/icons/logo-mark.svg" alt="Vilue" width="30" height="30" style="border-radius:9px;">
+        الأصدقاء
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="card" style="margin-bottom: var(--sp-5);">
+        <div style="font-weight:800; margin-bottom: var(--sp-3); font-size: var(--fs-sm);">إضافة صديق</div>
+        <form id="add-friend-form" style="display:flex; gap:8px;">
+          <input class="field-input" id="add-friend-id" type="text" inputmode="numeric" placeholder="معرّف الصديق (12 رقم)" dir="ltr" style="flex:1;">
+          <button type="submit" class="btn-sm btn-primary" style="border-radius:12px; padding: 0 18px;">إرسال</button>
+        </form>
+      </div>
+
+      <div class="mkt-tabs">
+        <button class="mkt-tab is-active" data-tab="friends">أصدقائي</button>
+        <button class="mkt-tab" data-tab="incoming">الطلبات الواردة <span id="incoming-count"></span></button>
+        <button class="mkt-tab" data-tab="outgoing">المرسلة</button>
+      </div>
+
+      <div id="panel-friends"><p class="empty-note">جارِ التحميل...</p></div>
+      <div id="panel-incoming" style="display:none;"></div>
+      <div id="panel-outgoing" style="display:none;"></div>
+    </div>
+
+    <nav class="bottom-nav">
+      <a href="home.html">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5M6 10v9h12v-9" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        الرئيسية
+      </a>
+      <a href="wallet.html">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M16 13h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        المحفظة
+      </a>
+      <a href="friends.html" class="is-active">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.8"/><path d="M16 11l1.5 1.5L21 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        الأصدقاء
+      </a>
+      <a href="marketplace.html">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        المتجر
+      </a>
+      <a href="profile.html">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="currentColor" stroke-width="1.8"/></svg>
+        الحساب
+      </a>
+    </nav>
+  </div>
+
+  <style>.empty-note { text-align: center; color: var(--color-text-muted); font-size: var(--fs-sm); padding: var(--sp-8) 0; }</style>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/friends.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    function friendRowHtml(user, actionsHtml) {
+      const badge = Vilue_Utils.badgeHtml(user.verificationBadge);
+      return `
+        <div class="tx-row">
+          <div class="avatar" style="width:40px;height:40px;font-size:14px;">${user.name ? user.name.trim().charAt(0) : '؟'}</div>
+          <div class="tx-info">
+            <div class="tx-title">${user.name} ${badge}</div>
+            <div class="tx-meta">ID: ${user.userId}</div>
+          </div>
+          ${actionsHtml || ''}
+        </div>`;
+    }
+
+    async function loadFriends() {
+      const container = Vilue_Utils.qs('#panel-friends');
+      container.innerHTML = '<p class="empty-note">جارِ التحميل...</p>';
+      try {
+        const { friends } = await Vilue_Friends.listFriends();
+        container.innerHTML = friends.length
+          ? friends.map((f) => friendRowHtml(f, `
+              <div style="display:flex; gap:6px;">
+                <a class="btn-sm btn-primary" href="chat.html?friendId=${f.id}&name=${encodeURIComponent(f.name)}" style="border-radius:10px; text-decoration:none; display:inline-flex; align-items:center;">دردشة</a>
+                <button class="btn-sm admin-reject" data-remove="${f.id}" style="border-radius:10px;">إزالة</button>
+              </div>`)).join('')
+          : '<p class="empty-note">ما عندك أصدقاء بعد — ابحث عن صديقك بمعرّفه وأضفه.</p>';
+
+        container.querySelectorAll('[data-remove]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              await Vilue_Friends.removeFriend(btn.dataset.remove);
+              Vilue_Utils.showToast('تمت الإزالة', 'success');
+              loadFriends();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    async function loadIncoming() {
+      const container = Vilue_Utils.qs('#panel-incoming');
+      container.innerHTML = '<p class="empty-note">جارِ التحميل...</p>';
+      try {
+        const { requests } = await Vilue_Friends.listIncoming();
+        Vilue_Utils.qs('#incoming-count').textContent = requests.length ? `(${requests.length})` : '';
+        container.innerHTML = requests.length
+          ? requests.map((r) => friendRowHtml(r.user, `
+              <div style="display:flex; gap:6px;">
+                <button class="btn-sm admin-approve" data-accept="${r.id}" style="border-radius:10px;">قبول</button>
+                <button class="btn-sm admin-reject" data-reject="${r.id}" style="border-radius:10px;">رفض</button>
+              </div>`)).join('')
+          : '<p class="empty-note">لا توجد طلبات صداقة واردة.</p>';
+
+        container.querySelectorAll('[data-accept]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              await Vilue_Friends.respond(btn.dataset.accept, 'accept');
+              Vilue_Utils.showToast('تم قبول الطلب', 'success');
+              loadIncoming(); loadFriends();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+        container.querySelectorAll('[data-reject]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              await Vilue_Friends.respond(btn.dataset.reject, 'reject');
+              Vilue_Utils.showToast('تم رفض الطلب', 'default');
+              loadIncoming();
+            } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    async function loadOutgoing() {
+      const container = Vilue_Utils.qs('#panel-outgoing');
+      container.innerHTML = '<p class="empty-note">جارِ التحميل...</p>';
+      try {
+        const { requests } = await Vilue_Friends.listOutgoing();
+        container.innerHTML = requests.length
+          ? requests.map((r) => friendRowHtml(r.user, '<span class="tx-status pending">بانتظار الرد</span>')).join('')
+          : '<p class="empty-note">ما عندك طلبات صداقة مُرسَلة.</p>';
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+
+    document.addEventListener('vilue:app-ready', () => {
+      if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+      loadFriends();
+      loadIncoming();
+
+      Vilue_Utils.qsa('.mkt-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          Vilue_Utils.qsa('.mkt-tab').forEach((t) => t.classList.remove('is-active'));
+          tab.classList.add('is-active');
+          ['friends', 'incoming', 'outgoing'].forEach((name) => {
+            Vilue_Utils.qs(`#panel-${name}`).style.display = name === tab.dataset.tab ? 'block' : 'none';
+          });
+          if (tab.dataset.tab === 'outgoing') loadOutgoing();
+        });
+      });
+
+      Vilue_Utils.qs('#add-friend-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = Vilue_Utils.qs('#add-friend-id');
+        const id = input.value.trim();
+        if (!/^\d{6,12}$/.test(id)) {
+          Vilue_Utils.showToast('أدخل معرّفاً صحيحاً', 'error');
+          return;
+        }
+        try {
+          await Vilue_Friends.sendRequest(id);
+          Vilue_Utils.showToast('تم إرسال طلب الصداقة', 'success');
+          input.value = '';
+        } catch (err) {
+          const messages = {
+            USER_NOT_FOUND: 'لا يوجد مستخدم بهذا المعرّف',
+            CANNOT_ADD_SELF: 'لا يمكنك إضافة نفسك',
+            REQUESTS_DISABLED: 'هذا المستخدم لا يستقبل طلبات صداقة',
+            ALREADY_FRIENDS: 'أنتما أصدقاء بالفعل',
+            REQUEST_ALREADY_PENDING: 'يوجد طلب سابق بانتظار الرد',
+          };
+          Vilue_Utils.showToast(messages[err.code] || err.message, 'error');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

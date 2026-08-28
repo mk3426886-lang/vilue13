@@ -1,0 +1,26 @@
+/* ==========================================================================
+   Vilue — Responsive rules (mobile-first; this file adds up from small)
+   ========================================================================== */
+
+/* Tablet */
+@media (min-width: 640px) {
+  .welcome-illustration { width: min(320px, 60vw); }
+  .otp-inputs input { width: 50px; height: 58px; }
+}
+
+/* Small laptop */
+@media (min-width: 900px) {
+  .welcome-screen {
+    flex-direction: row;
+    align-items: center;
+  }
+  .welcome-top { position: absolute; inset-inline: var(--sp-8); top: var(--sp-6); }
+  .welcome-hero { max-width: 640px; margin: 0 auto; }
+
+  .auth-form-body { padding-top: var(--sp-8); }
+}
+
+/* Desktop */
+@media (min-width: 1200px) {
+  .container { max-width: 1140px; }
+}

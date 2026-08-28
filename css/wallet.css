@@ -1,0 +1,23 @@
+/* Vilue — wallet page styles */
+.wallet-filters {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  margin-top: var(--sp-5);
+  padding-bottom: var(--sp-1);
+}
+.filter-chip {
+  flex-shrink: 0;
+  border: 1.5px solid var(--color-border);
+  background: var(--c-white);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+.filter-chip.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--c-white);
+}

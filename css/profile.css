@@ -1,0 +1,56 @@
+/* Vilue — profile page styles */
+.profile-header {
+  background: linear-gradient(160deg, var(--c-navy-900), var(--c-navy-700));
+  color: var(--c-white);
+  padding: var(--sp-8) var(--sp-5) var(--sp-6);
+  text-align: center;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.avatar-lg {
+  width: 78px; height: 78px;
+  border-radius: 50%;
+  margin: 0 auto var(--sp-3);
+  background: linear-gradient(135deg, var(--c-purple-500), var(--c-purple-600));
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  border: 3px solid rgba(255,255,255,0.25);
+}
+.profile-header h1 { font-size: var(--fs-lg); }
+.profile-header .uid { color: rgba(255,255,255,0.6); font-size: var(--fs-sm); margin-top: 4px; }
+
+.profile-menu-group {
+  background: var(--c-white);
+  border-radius: var(--radius-lg);
+  margin-top: calc(-1 * var(--sp-6));
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  position: relative;
+}
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.profile-menu-item:last-child { border-bottom: none; }
+.pmi-icon {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--c-bg-field);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--c-navy-800);
+}
+.pmi-label { flex: 1; }
+.pmi-chevron { color: var(--c-gray-500); font-size: 18px; }
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+}
+.info-label { color: var(--color-text-muted); }
+.info-value { font-weight: 700; }

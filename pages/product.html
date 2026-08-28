@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | تفاصيل المنتج</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/marketplace.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <div class="auth-form-screen">
+    <div class="auth-form-top">
+      <button class="back-btn" type="button" onclick="history.back()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="auth-form-body">
+      <div class="mkt-detail-img" id="detail-img">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.5"/></svg>
+      </div>
+
+      <h1 class="auth-title" id="detail-title">—</h1>
+      <div class="mkt-card-price" style="font-size: 24px; margin-bottom: var(--sp-2);" id="detail-price">—</div>
+      <p style="color: var(--color-text-muted); font-size: var(--fs-sm); margin-bottom: var(--sp-6);" id="detail-description"></p>
+
+      <button class="btn btn-primary" id="buy-btn">شراء الآن</button>
+      <p style="text-align:center; font-size: var(--fs-xs); color: var(--color-text-muted); margin-top: var(--sp-3);" id="detail-status"></p>
+    </div>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/marketplace.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.addEventListener('vilue:app-ready', async () => {
+      const params = new URLSearchParams(location.search);
+      const productId = params.get('id');
+      if (!productId) { window.location.href = 'marketplace.html'; return; }
+
+      const buyBtn = Vilue_Utils.qs('#buy-btn');
+
+      try {
+        const { product } = await Vilue_Marketplace.getProduct(productId);
+        Vilue_Utils.qs('#detail-title').textContent = product.title;
+        Vilue_Utils.qs('#detail-price').textContent = `${Vilue_Utils.formatSlon(product.price_slon)} سلون`;
+        Vilue_Utils.qs('#detail-description').textContent = product.description || '';
+        if (product.image_url) {
+          Vilue_Utils.qs('#detail-img').innerHTML = `<img src="${product.image_url}" alt="">`;
+        }
+
+        if (product.status !== 'approved') {
+          buyBtn.disabled = true;
+          buyBtn.textContent = product.status === 'sold' ? 'تم البيع' : 'غير متاح حالياً';
+        }
+      } catch (err) {
+        Vilue_Utils.qs('#detail-title').textContent = 'تعذّر تحميل المنتج';
+        buyBtn.disabled = true;
+      }
+
+      buyBtn.addEventListener('click', async () => {
+        if (!Vilue_Auth.isAuthenticated()) {
+          window.location.href = 'login.html';
+          return;
+        }
+        Vilue_Utils.setLoading(buyBtn, true);
+        try {
+          const result = await Vilue_Marketplace.buy(productId);
+          if (result.deliveryContent) {
+            Vilue_Utils.qs('#buy-btn').style.display = 'none';
+            const box = document.createElement('div');
+            box.className = 'card';
+            box.style.marginTop = 'var(--sp-4)';
+            box.innerHTML = `
+              <div style="font-weight:700; font-size:13px; margin-bottom:8px;">🎉 تم الشراء! هذا محتوى منتجك:</div>
+              <div style="background:var(--c-bg-field); border-radius:10px; padding:12px; font-family:monospace; font-size:14px; word-break:break-all;">${result.deliveryContent}</div>
+              <button class="btn-sm btn-outline" id="copy-delivery-btn" style="margin-top:10px; width:100%;">نسخ</button>`;
+            Vilue_Utils.qs('.auth-form-body').appendChild(box);
+            Vilue_Utils.qs('#copy-delivery-btn').addEventListener('click', async () => {
+              await navigator.clipboard.writeText(result.deliveryContent);
+              Vilue_Utils.showToast('تم النسخ', 'success');
+            });
+          } else {
+            Vilue_Utils.showToast('تم الشراء بنجاح', 'success');
+            setTimeout(() => { window.location.href = 'marketplace.html'; }, 1200);
+          }
+        } catch (err) {
+          const messages = {
+            INSUFFICIENT_BALANCE: 'رصيدك غير كافٍ لإتمام هذا الشراء',
+            CANNOT_BUY_OWN_LISTING: 'لا يمكنك شراء إعلانك الخاص',
+            PRODUCT_NOT_AVAILABLE: 'هذا المنتج لم يعد متاحاً',
+          };
+          Vilue_Utils.showToast(messages[err.code] || err.message, 'error');
+        } finally {
+          Vilue_Utils.setLoading(buyBtn, false);
+          buyBtn.textContent = 'شراء الآن';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

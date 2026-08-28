@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | التحقق</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="auth-form-screen">
+    <div class="auth-form-top">
+      <button class="back-btn" type="button" onclick="history.back()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="transform: scaleX(var(--flip,1))"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="auth-form-body" style="text-align:center;">
+      <h1 class="auth-title" data-i18n="verify.title">تحقق من حسابك</h1>
+      <p class="auth-subtitle">
+        <span data-i18n="verify.subtitle">أدخل الرمز المكوّن من 6 أرقام المرسل إلى</span>
+        <strong id="verify-contact"></strong>
+      </p>
+
+      <form id="verify-form" novalidate>
+        <div class="otp-inputs" dir="ltr">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-digit" aria-label="digit 1">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-digit" aria-label="digit 2">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-digit" aria-label="digit 3">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-digit" aria-label="digit 4">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-digit" aria-label="digit 5">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-digit" aria-label="digit 6">
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="verify-submit" data-i18n="verify.verifyButton">تأكيد</button>
+      </form>
+
+      <p class="resend-row" style="margin-top: var(--sp-5);">
+        <span data-i18n="verify.resendPrompt">لم يصلك الرمز؟</span>
+        <button type="button" id="resend-btn" data-i18n="verify.resendAction">إعادة الإرسال</button>
+      </p>
+    </div>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.addEventListener('vilue:app-ready', () => {
+      const userId = sessionStorage.getItem('vilue_pending_user_id');
+      const contact = sessionStorage.getItem('vilue_pending_contact') || '';
+      Vilue_Utils.qs('#verify-contact').textContent = contact;
+
+      if (!userId) {
+        window.location.href = 'register.html';
+        return;
+      }
+
+      const digits = Vilue_Utils.qsa('.otp-digit');
+      digits.forEach((input, idx) => {
+        input.addEventListener('input', () => {
+          input.value = input.value.replace(/\D/g, '').slice(0, 1);
+          if (input.value && digits[idx + 1]) digits[idx + 1].focus();
+        });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !input.value && digits[idx - 1]) digits[idx - 1].focus();
+        });
+      });
+
+      const form = Vilue_Utils.qs('#verify-form');
+      const submitBtn = Vilue_Utils.qs('#verify-submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = digits.map((d) => d.value).join('');
+        if (code.length !== 6) {
+          Vilue_Utils.showToast(Vilue_I18n.getLang() === 'ar' ? 'أدخل الرمز كاملاً' : 'Enter the full code', 'error');
+          return;
+        }
+
+        Vilue_Utils.setLoading(submitBtn, true);
+        try {
+          await Vilue_Auth.verify(userId, code);
+          sessionStorage.removeItem('vilue_pending_user_id');
+          sessionStorage.removeItem('vilue_pending_contact');
+          window.location.href = 'home.html';
+        } catch (err) {
+          if (err.code === 'DEVICE_SWITCH_COOLDOWN') {
+            const retry = err.retryAt ? new Date(err.retryAt) : null;
+            const timeStr = retry ? retry.toLocaleString(Vilue_I18n.getLang() === 'ar' ? 'ar-IQ' : 'en-US') : '';
+            Vilue_Utils.showToast(
+              Vilue_I18n.getLang() === 'ar'
+                ? `حسابك مسجّل دخول من جهاز آخر. حاول لاحقاً: ${timeStr}`
+                : `Account is active on another device. Try again after: ${timeStr}`,
+              'error'
+            );
+            return;
+          }
+          Vilue_Utils.showToast(
+            err.code === 'OTP_INVALID' || err.code === 'INVALID_CODE'
+              ? (Vilue_I18n.getLang() === 'ar' ? 'رمز غير صحيح' : 'Invalid code')
+              : err.message,
+            'error'
+          );
+        } finally {
+          Vilue_Utils.setLoading(submitBtn, false);
+        }
+      });
+
+      // Resend cooldown UI — server enforces the real 5-per-15-min limit.
+      let cooldown = 30;
+      const resendBtn = Vilue_Utils.qs('#resend-btn');
+      function tickCooldown() {
+        resendBtn.disabled = true;
+        resendBtn.textContent = Vilue_I18n.t('verify.resendCooldown', { seconds: cooldown });
+        const timer = setInterval(() => {
+          cooldown -= 1;
+          if (cooldown <= 0) {
+            clearInterval(timer);
+            resendBtn.disabled = false;
+            resendBtn.textContent = Vilue_I18n.t('verify.resendAction');
+            cooldown = 30;
+          } else {
+            resendBtn.textContent = Vilue_I18n.t('verify.resendCooldown', { seconds: cooldown });
+          }
+        }, 1000);
+      }
+      resendBtn.addEventListener('click', async () => {
+        try {
+          await Vilue_Auth.resendCode(userId, Vilue_I18n.getLang());
+          Vilue_Utils.showToast(Vilue_I18n.getLang() === 'ar' ? 'تم إرسال رمز جديد' : 'A new code was sent', 'success');
+          tickCooldown();
+        } catch (err) {
+          if (err.code === 'OTP_RATE_LIMITED') {
+            Vilue_Utils.showToast(Vilue_I18n.t('verify.limitReached'), 'error');
+          } else if (err.code === 'OTP_COOLDOWN' && err.retryAfterSeconds) {
+            cooldown = err.retryAfterSeconds;
+            tickCooldown();
+          } else {
+            Vilue_Utils.showToast(err.message, 'error');
+          }
+        }
+      });
+      tickCooldown();
+    });
+  </script>
+</body>
+</html>

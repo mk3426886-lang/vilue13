@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | تسجيل الدخول</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="auth-form-screen">
+    <div class="auth-form-top">
+      <button class="back-btn" type="button" onclick="history.back()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="transform: scaleX(var(--flip,1))"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang-option="ar">العربية</button>
+        <button type="button" data-lang-option="en">English</button>
+      </div>
+    </div>
+
+    <div class="auth-form-body">
+      <div class="auth-tabs">
+        <button type="button" class="is-active" data-i18n="auth.loginTab">تسجيل الدخول</button>
+        <a class="btn-tab-link" href="register.html" style="all:unset; flex:1; text-align:center; padding:10px; border-radius:999px; font-weight:700; font-size:13px; color:var(--color-text-muted); cursor:pointer;" data-i18n="auth.registerTab">حساب جديد</a>
+      </div>
+
+      <h1 class="auth-title" data-i18n="auth.loginTitle">مرحباً بعودتك</h1>
+      <p class="auth-subtitle" data-i18n="auth.loginSubtitle">سجّل الدخول للمتابعة إلى حسابك</p>
+
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="identifier" data-i18n="auth.identifierLabel">المعرّف، رقم الهاتف، أو البريد الإلكتروني</label>
+          <input class="field-input" id="identifier" name="identifier" type="text" required data-i18n-placeholder="auth.identifierPlaceholder">
+          <span class="field-error" id="identifier-error" hidden></span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="password" data-i18n="auth.passwordLabel">كلمة المرور</label>
+          <div class="field-with-action">
+            <input class="field-input" id="password" name="password" type="password" autocomplete="current-password" required data-i18n-placeholder="auth.passwordPlaceholder">
+            <button type="button" class="field-action" id="toggle-password" aria-label="Show password">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+            </button>
+          </div>
+          <span class="field-error" id="password-error" hidden></span>
+        </div>
+
+        <div style="text-align:end; margin-bottom: var(--sp-6);">
+          <a href="forgot-password.html" style="font-size: var(--fs-sm); color: var(--color-primary); font-weight:600;" data-i18n="auth.forgotPassword">نسيت كلمة المرور؟</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="login-submit" data-i18n="common.continue">متابعة</button>
+      </form>
+
+      <p class="auth-footer-link">
+        <span data-i18n="auth.noAccount">ليس لديك حساب؟</span>
+        <a href="register.html" data-i18n="welcome.createAccount">إنشاء حساب جديد</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.addEventListener('vilue:app-ready', () => {
+      const form = Vilue_Utils.qs('#login-form');
+      const submitBtn = Vilue_Utils.qs('#login-submit');
+      const togglePw = Vilue_Utils.qs('#toggle-password');
+      const pwInput = Vilue_Utils.qs('#password');
+
+      const params = new URLSearchParams(location.search);
+      if (params.get('reason') === 'session_replaced') {
+        Vilue_Utils.showToast(
+          Vilue_I18n.getLang() === 'ar'
+            ? 'تم تسجيل الدخول لحسابك من جهاز آخر'
+            : 'Your account was signed in from another device',
+          'default'
+        );
+      }
+
+      togglePw.addEventListener('click', () => {
+        pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const identifier = Vilue_Utils.qs('#identifier').value.trim();
+        const password = Vilue_Utils.qs('#password').value;
+        const idError = Vilue_Utils.qs('#identifier-error');
+        idError.hidden = true;
+
+        if (!identifier || !password) {
+          Vilue_Utils.showToast(Vilue_I18n.t('common.required'), 'error');
+          return;
+        }
+
+        Vilue_Utils.setLoading(submitBtn, true);
+        try {
+          await Vilue_Auth.login(identifier, password);
+          Vilue_Utils.showToast('OK', 'success');
+          window.location.href = 'home.html';
+        } catch (err) {
+          if (err.code === 'ACCOUNT_NOT_VERIFIED' && err.userId) {
+            sessionStorage.setItem('vilue_pending_user_id', err.userId);
+            sessionStorage.setItem('vilue_pending_contact', identifier);
+            window.location.href = 'verify.html';
+            return;
+          }
+          if (err.code === 'ACCOUNT_LOCKED') {
+            const retry = err.retryAt ? new Date(err.retryAt).toLocaleTimeString(Vilue_I18n.getLang() === 'ar' ? 'ar-IQ' : 'en-US') : '';
+            idError.textContent = Vilue_I18n.getLang() === 'ar'
+              ? `محاولات دخول كثيرة فاشلة، حاول بعد: ${retry}`
+              : `Too many failed attempts, try again after: ${retry}`;
+            idError.hidden = false;
+            return;
+          }
+          if (err.code === 'ACCOUNT_SUSPENDED') {
+            const until = err.bannedUntil ? new Date(err.bannedUntil).toLocaleString(Vilue_I18n.getLang() === 'ar' ? 'ar-IQ' : 'en-US') : null;
+            idError.textContent = Vilue_I18n.getLang() === 'ar'
+              ? `حسابك موقوف${err.reason ? `: ${err.reason}` : ''}${until ? ` — حتى ${until}` : ' بشكل دائم'}`
+              : `Your account is suspended${err.reason ? `: ${err.reason}` : ''}${until ? ` until ${until}` : ' permanently'}`;
+            idError.hidden = false;
+            return;
+          }
+          if (err.code === 'DEVICE_SWITCH_COOLDOWN') {
+            const retry = err.retryAt ? new Date(err.retryAt) : null;
+            const timeStr = retry ? retry.toLocaleString(Vilue_I18n.getLang() === 'ar' ? 'ar-IQ' : 'en-US') : '';
+            idError.textContent = Vilue_I18n.getLang() === 'ar'
+              ? `حسابك مسجّل دخول من جهاز آخر. يمكنك التبديل لهذا الجهاز بعد: ${timeStr}`
+              : `Your account is signed in on another device. You can switch to this one after: ${timeStr}`;
+            idError.hidden = false;
+            return;
+          }
+          idError.textContent = err.code === 'INVALID_CREDENTIALS'
+            ? (Vilue_I18n.getLang() === 'ar' ? 'بيانات الدخول غير صحيحة' : 'Invalid credentials')
+            : err.message;
+          idError.hidden = false;
+        } finally {
+          Vilue_Utils.setLoading(submitBtn, false);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

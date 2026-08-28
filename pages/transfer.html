@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | تحويل</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <div class="auth-form-screen">
+    <div class="auth-form-top">
+      <button class="back-btn" type="button" onclick="history.back()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="auth-form-body">
+      <h1 class="auth-title">تحويل إلى مستخدم فيليو</h1>
+      <p class="auth-subtitle" id="balance-line">الرصيد المتاح: —</p>
+
+      <form id="transfer-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="receiverId">معرّف المستلم (12 رقم)</label>
+          <input class="field-input" id="receiverId" type="text" inputmode="numeric" placeholder="أدخل معرّف المستلم" dir="ltr" required>
+          <span class="field-error" id="receiver-error" hidden></span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="amount">المبلغ (سلون)</label>
+          <input class="field-input" id="amount" type="number" min="1" step="1" placeholder="أدخل المبلغ بالسلون" required>
+          <span class="field-hint" id="iqd-hint"></span>
+        </div>
+
+        <div id="twofa-block" style="display:none;">
+          <div class="field">
+            <label class="field-label" for="twofa-code">رمز التحقق (2FA)</label>
+            <div class="field-with-action">
+              <input class="field-input" id="twofa-code" type="text" inputmode="numeric" maxlength="6" placeholder="أدخل الرمز المرسل لإيميلك" dir="ltr">
+              <button type="button" id="send-code-btn" style="all:unset; position:absolute; inset-inline-end:12px; top:50%; transform:translateY(-50%); font-size:12px; font-weight:700; color:var(--color-primary); cursor:pointer;">إرسال الرمز</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submit-btn">تحويل الآن</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/wallet.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.addEventListener('vilue:app-ready', async () => {
+      if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+      const user = await Vilue_Auth.loadSession();
+      if (user && user.twoFaEnabled) {
+        Vilue_Utils.qs('#twofa-block').style.display = 'block';
+      }
+
+      try {
+        const wallet = await Vilue_Wallet.getMyWallet();
+        Vilue_Utils.qs('#balance-line').textContent = `الرصيد المتاح: ${Vilue_Utils.formatSlon(wallet.balanceSlon)} سلون`;
+      } catch (e) { /* leave default */ }
+
+      const amountInput = Vilue_Utils.qs('#amount');
+      const iqdHint = Vilue_Utils.qs('#iqd-hint');
+      amountInput.addEventListener('input', () => {
+        const v = Number(amountInput.value) || 0;
+        iqdHint.textContent = v ? `≈ ${Vilue_Utils.formatSlon(v / 5)} دينار عراقي` : '';
+      });
+
+      Vilue_Utils.qs('#send-code-btn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        try {
+          await Vilue_Wallet.sendTwoFactorCode();
+          Vilue_Utils.showToast('تم إرسال رمز التحقق لإيميلك', 'success');
+          let cooldown = 30;
+          const timer = setInterval(() => {
+            cooldown -= 1;
+            btn.textContent = `إعادة الإرسال (${cooldown})`;
+            if (cooldown <= 0) { clearInterval(timer); btn.textContent = 'إرسال الرمز'; btn.disabled = false; }
+          }, 1000);
+        } catch (err) {
+          Vilue_Utils.showToast(err.message, 'error');
+          btn.disabled = false;
+        }
+      });
+
+      Vilue_Utils.qs('#transfer-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = Vilue_Utils.qs('#submit-btn');
+        const receiverId = Vilue_Utils.qs('#receiverId').value.trim();
+        const amountSlon = Number(amountInput.value);
+        const code = Vilue_Utils.qs('#twofa-code').value.trim();
+        const receiverError = Vilue_Utils.qs('#receiver-error');
+        receiverError.hidden = true;
+
+        if (!/^\d{6,12}$/.test(receiverId)) {
+          receiverError.textContent = 'أدخل معرّفاً صحيحاً';
+          receiverError.hidden = false;
+          return;
+        }
+        if (!amountSlon || amountSlon <= 0) {
+          Vilue_Utils.showToast('أدخل مبلغاً صحيحاً', 'error');
+          return;
+        }
+
+        Vilue_Utils.setLoading(submitBtn, true);
+        try {
+          await Vilue_Wallet.transfer({ receiverId, amountSlon, code: code || undefined });
+          Vilue_Utils.showToast('تم التحويل بنجاح', 'success');
+          setTimeout(() => { window.location.href = 'wallet.html'; }, 1200);
+        } catch (err) {
+          if (err.code === 'TWO_FA_REQUIRED') {
+            Vilue_Utils.qs('#twofa-block').style.display = 'block';
+            Vilue_Utils.showToast('أدخل رمز التحقق أولاً', 'error');
+          } else if (err.code === 'RECEIVER_NOT_FOUND') {
+            receiverError.textContent = 'لا يوجد مستخدم بهذا المعرّف';
+            receiverError.hidden = false;
+          } else if (err.code === 'INSUFFICIENT_BALANCE') {
+            Vilue_Utils.showToast('رصيدك غير كافٍ لإتمام هذا التحويل', 'error');
+          } else if (err.code === 'CANNOT_TRANSFER_TO_SELF') {
+            receiverError.textContent = 'لا يمكنك التحويل لنفسك';
+            receiverError.hidden = false;
+          } else {
+            Vilue_Utils.showToast(err.message, 'error');
+          }
+        } finally {
+          Vilue_Utils.setLoading(submitBtn, false);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

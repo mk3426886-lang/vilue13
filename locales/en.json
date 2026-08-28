@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "lang": "en",
+    "dir": "ltr",
+    "name": "English"
+  },
+  "common": {
+    "appName": "Vilue",
+    "continue": "Continue",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading...",
+    "or": "or",
+    "required": "This field is required",
+    "slon": "SLON",
+    "iqd": "IQD"
+  },
+  "welcome": {
+    "tagline": "Your digital wallet, made modern",
+    "subtitle": "Send, receive, and shop within Vilue — safely and effortlessly.",
+    "rate": "5 SLON = 1 IQD",
+    "login": "Log In",
+    "createAccount": "Create Account"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Log in to continue to your account",
+    "identifierLabel": "Your 12-digit ID or email",
+    "identifierPlaceholder": "Enter your ID or email",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "Enter your email address",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "registerTitle": "Create your account",
+    "registerSubtitle": "Join Vilue in under a minute",
+    "nameLabel": "Full name",
+    "namePlaceholder": "Enter your full name",
+    "contactLabel": "Email or phone number",
+    "contactPlaceholder": "Enter your email or phone number",
+    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "countryLabel": "Country",
+    "governorateLabel": "Governorate",
+    "governoratePlaceholder": "Select governorate",
+    "termsPrefix": "I agree to the",
+    "termsLink": "Terms & Conditions",
+    "and": "and",
+    "privacyLink": "Privacy Policy",
+    "haveAccount": "Already have an account?",
+    "loginTab": "Log In",
+    "registerTab": "Sign Up"
+  },
+  "verify": {
+    "title": "Verify your account",
+    "subtitle": "Enter the 6-digit code sent to",
+    "resendPrompt": "Didn't get the code?",
+    "resendAction": "Resend",
+    "resendCooldown": "You can resend in {seconds}s",
+    "verifyButton": "Verify",
+    "limitReached": "You've reached the code request limit, please try again later"
+  },
+  "settings": {
+    "language": "Language",
+    "languageSubtitle": "Choose the app interface language"
+  },
+  "governorates": [
+    "Baghdad", "Basra", "Nineveh", "Erbil", "Najaf", "Karbala", "Anbar",
+    "Dhi Qar", "Babil", "Diyala", "Kirkuk", "Wasit", "Maysan", "Saladin",
+    "Al-Qadisiyyah", "Al-Muthanna", "Duhok", "Sulaymaniyah"
+  ]
+}

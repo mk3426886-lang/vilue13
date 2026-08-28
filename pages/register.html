@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | إنشاء حساب</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="auth-form-screen">
+    <div class="auth-form-top">
+      <button class="back-btn" type="button" onclick="history.back()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="transform: scaleX(var(--flip,1))"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang-option="ar">العربية</button>
+        <button type="button" data-lang-option="en">English</button>
+      </div>
+    </div>
+
+    <div class="auth-form-body">
+      <div class="auth-tabs">
+        <a href="login.html" style="all:unset; flex:1; text-align:center; padding:10px; border-radius:999px; font-weight:700; font-size:13px; color:var(--color-text-muted); cursor:pointer;" data-i18n="auth.loginTab">تسجيل الدخول</a>
+        <button type="button" class="is-active" data-i18n="auth.registerTab">حساب جديد</button>
+      </div>
+
+      <h1 class="auth-title" data-i18n="auth.registerTitle">إنشاء حساب جديد</h1>
+      <p class="auth-subtitle" data-i18n="auth.registerSubtitle">انضم إلى فيليو خلال دقيقة واحدة</p>
+
+      <form id="register-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="name" data-i18n="auth.nameLabel">الاسم الكامل</label>
+          <input class="field-input" id="name" name="name" type="text" required data-i18n-placeholder="auth.namePlaceholder">
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="contact" data-i18n="auth.emailLabel">البريد الإلكتروني</label>
+          <input class="field-input" id="contact" name="contact" type="email" autocomplete="email" required data-i18n-placeholder="auth.emailPlaceholder">
+          <span class="field-error" id="contact-error" hidden></span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="password" data-i18n="auth.passwordLabel">كلمة المرور</label>
+          <input class="field-input" id="password" name="password" type="password" autocomplete="new-password" required data-i18n-placeholder="auth.passwordPlaceholder">
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="confirmPassword" data-i18n="auth.confirmPasswordLabel">تأكيد كلمة المرور</label>
+          <input class="field-input" id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required data-i18n-placeholder="auth.confirmPasswordPlaceholder">
+          <span class="field-error" id="confirm-error" hidden></span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="country" data-i18n="auth.countryLabel">الدولة</label>
+          <select class="field-select" id="country" name="country">
+            <option value="IQ" selected data-i18n="common.iraq">العراق</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="governorate" data-i18n="auth.governorateLabel">المحافظة</label>
+          <select class="field-select" id="governorate" name="governorate" required></select>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="referralId">رمز الإحالة (معرّف صديقك، 12 رقم)</label>
+          <input class="field-input" id="referralId" type="text" inputmode="numeric" placeholder="أدخل معرّف الشخص اللي رشّحك" dir="ltr" required>
+          <span class="field-hint">مطلوب لإنشاء الحساب — اطلبه من صديقك اللي عنده حساب بفيليو</span>
+          <span class="field-error" id="referral-error" hidden></span>
+        </div>
+
+        <div class="field checkbox-row">
+          <input type="checkbox" id="terms" required>
+          <label for="terms">
+            <span data-i18n="auth.termsPrefix">أوافق على</span>
+            <a href="terms.html" target="_blank" data-i18n="auth.termsLink">الشروط والأحكام</a>
+            <span data-i18n="auth.and">و</span>
+            <a href="privacy.html" target="_blank" data-i18n="auth.privacyLink">سياسة الخصوصية</a>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="register-submit" data-i18n="common.continue">متابعة</button>
+      </form>
+
+      <p class="auth-footer-link">
+        <span data-i18n="auth.haveAccount">لديك حساب بالفعل؟</span>
+        <a href="login.html" data-i18n="auth.loginTab">تسجيل الدخول</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    async function populateGovernorates() {
+      const lang = Vilue_I18n.getLang();
+      const res = await fetch(`/locales/${lang}.json`);
+      const dict = await res.json();
+      const select = Vilue_Utils.qs('#governorate');
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = Vilue_I18n.t('auth.governoratePlaceholder');
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      select.innerHTML = '';
+      select.appendChild(placeholder);
+      (dict.governorates || []).forEach((gov) => {
+        const opt = document.createElement('option');
+        opt.value = gov;
+        opt.textContent = gov;
+        select.appendChild(opt);
+      });
+    }
+
+    document.addEventListener('vilue:app-ready', async () => {
+      await populateGovernorates();
+      document.addEventListener('vilue:language-changed', populateGovernorates);
+
+      const form = Vilue_Utils.qs('#register-form');
+      const submitBtn = Vilue_Utils.qs('#register-submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = Vilue_Utils.qs('#name').value.trim();
+        const contact = Vilue_Utils.qs('#contact').value.trim();
+        const password = Vilue_Utils.qs('#password').value;
+        const confirmPassword = Vilue_Utils.qs('#confirmPassword').value;
+        const governorate = Vilue_Utils.qs('#governorate').value;
+        const referralId = Vilue_Utils.qs('#referralId').value.trim();
+        const termsAccepted = Vilue_Utils.qs('#terms').checked;
+
+        const contactError = Vilue_Utils.qs('#contact-error');
+        const confirmError = Vilue_Utils.qs('#confirm-error');
+        const referralError = Vilue_Utils.qs('#referral-error');
+        [contactError, confirmError, referralError].forEach((el) => { el.hidden = true; });
+
+        let hasError = false;
+
+        if (!Vilue_Utils.isValidEmail(contact)) {
+          contactError.textContent = Vilue_I18n.getLang() === 'ar'
+            ? 'أدخل بريداً إلكترونياً صحيحاً'
+            : 'Enter a valid email address';
+          contactError.hidden = false;
+          hasError = true;
+        }
+        if (password !== confirmPassword || password.length < 8) {
+          confirmError.textContent = Vilue_I18n.getLang() === 'ar'
+            ? 'كلمتا المرور غير متطابقتين أو أقصر من 8 أحرف'
+            : 'Passwords do not match or are shorter than 8 characters';
+          confirmError.hidden = false;
+          hasError = true;
+        }
+        if (!/^\d{6,12}$/.test(referralId)) {
+          referralError.textContent = 'أدخل معرّفاً صحيحاً (أرقام فقط)';
+          referralError.hidden = false;
+          hasError = true;
+        }
+        if (!name || !governorate || !termsAccepted) {
+          Vilue_Utils.showToast(Vilue_I18n.t('common.required'), 'error');
+          hasError = true;
+        }
+
+        if (hasError) return;
+
+        Vilue_Utils.setLoading(submitBtn, true);
+        try {
+          const result = await Vilue_Auth.register({
+            name, email: contact, password, referralId,
+            country: 'IQ', governorate, lang: Vilue_I18n.getLang(),
+          });
+          sessionStorage.setItem('vilue_pending_user_id', result.userId);
+          sessionStorage.setItem('vilue_pending_contact', contact);
+          window.location.href = 'verify.html';
+        } catch (err) {
+          if (err.code === 'DUPLICATE_ACCOUNT') {
+            contactError.textContent = Vilue_I18n.getLang() === 'ar'
+              ? 'هذا الحساب مستخدم بالفعل'
+              : 'This account already exists';
+            contactError.hidden = false;
+          } else if (err.code === 'REFERRAL_NOT_FOUND' || err.code === 'REFERRAL_REQUIRED') {
+            referralError.textContent = err.code === 'REFERRAL_NOT_FOUND'
+              ? 'لا يوجد مستخدم بهذا المعرّف'
+              : 'رمز الإحالة مطلوب';
+            referralError.hidden = false;
+          } else {
+            Vilue_Utils.showToast(err.message, 'error');
+          }
+        } finally {
+          Vilue_Utils.setLoading(submitBtn, false);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

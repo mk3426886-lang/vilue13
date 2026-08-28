@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vilue | الإشعارات</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-btn" onclick="history.back()" aria-label="Back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="topbar-brand" style="font-size:17px;">الإشعارات</div>
+      <button class="btn-sm btn-ghost" id="mark-all-btn" style="font-size:11px;">تعليم الكل كمقروء</button>
+    </header>
+
+    <div class="container">
+      <div id="notif-list"><p class="empty-note">جارِ التحميل...</p></div>
+    </div>
+  </div>
+
+  <style>
+    .empty-note { text-align: center; color: var(--color-text-muted); font-size: var(--fs-sm); padding: var(--sp-8) 0; }
+    .notif-card { background: var(--c-white); border-radius: var(--radius-lg); padding: var(--sp-4); margin-bottom: var(--sp-2); box-shadow: var(--shadow-sm); position: relative; }
+    .notif-card.is-unread::before { content:''; position:absolute; inset-inline-start: var(--sp-3); top: var(--sp-4); width:8px; height:8px; border-radius:50%; background: var(--c-pink-600); }
+    .notif-card { padding-inline-start: calc(var(--sp-4) + 14px); }
+    .notif-title { font-weight: 700; font-size: var(--fs-sm); }
+    .notif-body { font-size: var(--fs-xs); color: var(--color-text-muted); margin-top: 4px; }
+    .notif-time { font-size: 10px; color: var(--c-gray-500); margin-top: 6px; }
+  </style>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/notifications.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.addEventListener('vilue:app-ready', async () => {
+      if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+      const container = Vilue_Utils.qs('#notif-list');
+      try {
+        const { notifications } = await Vilue_Notifications.list();
+        container.innerHTML = notifications.length
+          ? notifications.map((n) => `
+            <div class="notif-card ${n.is_read ? '' : 'is-unread'}" data-id="${n.id}">
+              <div class="notif-title">${n.title}</div>
+              ${n.body ? `<div class="notif-body">${n.body}</div>` : ''}
+              <div class="notif-time">${new Date(n.created_at).toLocaleString('ar-IQ')}</div>
+            </div>`).join('')
+          : '<p class="empty-note">لا توجد إشعارات بعد.</p>';
+
+        container.querySelectorAll('.notif-card.is-unread').forEach((card) => {
+          card.addEventListener('click', async () => {
+            card.classList.remove('is-unread');
+            try { await Vilue_Notifications.markRead(card.dataset.id); } catch (e) {}
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
+      }
+
+      Vilue_Utils.qs('#mark-all-btn').addEventListener('click', async () => {
+        try {
+          await Vilue_Notifications.markAllRead();
+          Vilue_Utils.qsa('.notif-card').forEach((c) => c.classList.remove('is-unread'));
+        } catch (err) { Vilue_Utils.showToast(err.message, 'error'); }
+      });
+    });
+  </script>
+</body>
+</html>
