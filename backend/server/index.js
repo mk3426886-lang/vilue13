@@ -20,21 +20,14 @@ const telegramRoutes = require('../routes/telegram.routes');
 
 const app = express();
 
-app.get('/', (req, res) => {
-  res.send('Server is running successfully!');
-});
-app.use(helmet());
-// Dev-stage CORS: open to any origin so the frontend (served from Live
-// Server / any localhost port) can always reach the backend. Tighten this
-// to a specific FRONTEND_URL once the app has a fixed deployed origin.
+// تعطيل قيود helmet على الموارد الخارجية والـ WebView ليعرض الواجهة بشكل صحيح
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 
-// Body size cap — image uploads (base64 receipts/products) need some
-// room, but this still blocks obviously abusive oversized payloads.
+// Body size cap
 app.use(express.json({ limit: '6mb' }));
 
-// Global request throttle as a basic anti-abuse/anti-brute-force layer,
-// on top of the tighter per-route limiters already on auth endpoints.
+// Global request throttle
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 500,
@@ -42,6 +35,10 @@ app.use(rateLimit({
   legacyHeaders: false,
 }));
 
+// تقديم جميع الملفات الثابتة (HTML, CSS, JS) من المجلد الرئيسي للمشروع
+app.use(express.static(path.join(__dirname, '..', '..')));
+
+// مسارات الـ API
 app.get('/api/v1/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', usersRoutes);
@@ -56,7 +53,12 @@ app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/tasks', tasksRoutes);
 app.use('/api/v1/telegram', telegramRoutes);
 
+// توجيه الصفحة الرئيسية لفتح index.html بدلاً من طباعة النص
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', '..', 'index.html'));
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`Vilue backend listening on port ${PORT}`);
+  console.log(Vilue backend listening on port ${PORT});
 });
