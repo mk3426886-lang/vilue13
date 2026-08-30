@@ -46,6 +46,7 @@ app.use('/api/v1/messages', messagesRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/tasks', tasksRoutes);
 app.use('/api/v1/telegram', telegramRoutes);
+
 // حساب المسار المطلق الكامل لجذر المشروع
 const rootPath = path.resolve(__dirname, '../../');
 
@@ -56,6 +57,7 @@ app.use(express.static(rootPath));
 app.get('/', (req, res) => {
   res.sendFile(path.join(rootPath, 'index.html'));
 });
+
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
