@@ -20,7 +20,7 @@ const telegramRoutes = require('../routes/telegram.routes');
 
 const app = express();
 
-// تعطيل قيود helmet على الموارد الخارجية ليعرض الواجهة بشكل صحيح
+// تعطيل قيود helmet على الموارد الخارجية والـ WebView ليعرض الواجهة بشكل صحيح
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 
@@ -53,12 +53,18 @@ app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/tasks', tasksRoutes);
 app.use('/api/v1/telegram', telegramRoutes);
 
+// تحديد المسار الرئيسي للمشروع (الرجوع خطوتين للخروج من server ثم backend)
+const rootPath = path.join(__dirname, '..', '..');
+
+// تقديم كافة الملفات الثابتة (CSS, JS, الصور) من Root
+app.use(express.static(rootPath));
+
 // توجيه الصفحة الرئيسية لفتح index.html
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'index.html'));
+  res.sendFile(path.join(rootPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`Vilue backend listening on port ${PORT}`);
+  console.log(Vilue backend listening on port ${PORT});
 });
