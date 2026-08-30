@@ -12,7 +12,7 @@
  */
 
 const Vilue_API_CONFIG = {
-  BASE_URL: 'http://localhost:4000/api/v1',
+  BASE_URL: 'https://vilue.koyeb.app/api/v1',
 };
 
 const Vilue_Api = (() => {
