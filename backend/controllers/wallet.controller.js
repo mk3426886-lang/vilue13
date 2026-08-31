@@ -1,13 +1,17 @@
 /**
  * Vilue — wallet controller
  *
- * Deposit (Zain Cash / Super Qi): manual-review — creates a pending
- * request, admin approves/rejects from the admin panel. MasterCard is a
- * clearly-marked placeholder (no real payment gateway is configured).
+ * Deposit (Super Qi): manual-review — creates a pending request, admin
+ * approves/rejects from the admin panel. Zain Cash deposits are
+ * temporarily disabled (kept visible in the UI as disabled, matching
+ * how MasterCard is shown). MasterCard is a clearly-marked placeholder
+ * (no real payment gateway is configured).
  *
- * Withdrawal (Zain Cash): funds are held immediately on request, and can
- * be self-cancelled within 15 minutes if still pending. MasterCard
- * withdrawal is a placeholder for the same reason as MasterCard deposit.
+ * Withdrawal (Super Qi): funds are held immediately on request, and can
+ * be self-cancelled within 15 minutes if still pending. Requires an
+ * account name, phone number and transfer number. Zain Cash
+ * withdrawals are temporarily disabled. MasterCard withdrawal is a
+ * placeholder for the same reason as MasterCard deposit.
  *
  * Transfer (Vilue-to-Vilue): instant, atomic, no admin review needed.
  *
@@ -19,10 +23,12 @@
 const usersRepo = require('../database/users.repo');
 const walletsRepo = require('../database/wallets.repo');
 const otpService = require('../services/otp.service');
-const { isValidZainCashPhone } = require('../utils/phone');
 const { uploadReceiptImage } = require('../services/storage.service');
 
 const PLACEHOLDER_METHODS = new Set(['mastercard']);
+// Kept as real, previously-supported methods but switched off for now —
+// distinct from PLACEHOLDER_METHODS (which were never connected at all).
+const DISABLED_METHODS = new Set(['zaincash']);
 
 async function requireTwoFactorIfEnabled(userId, code) {
   const user = await usersRepo.findById(userId);
@@ -90,7 +96,10 @@ async function deposit(req, res) {
     if (PLACEHOLDER_METHODS.has(method)) {
       return res.status(501).json({ code: 'METHOD_NOT_AVAILABLE', message: 'MasterCard deposits are not connected yet — this needs a real payment gateway account.' });
     }
-    if ((method === 'superqi' || method === 'zaincash') && !senderAccountName) {
+    if (DISABLED_METHODS.has(method)) {
+      return res.status(423).json({ code: 'METHOD_DISABLED', message: 'Zain Cash deposits are temporarily disabled — please use Super Qi.' });
+    }
+    if (method === 'superqi' && !senderAccountName) {
       return res.status(400).json({ code: 'MISSING_SENDER_INFO', message: 'senderAccountName is required for manual-review deposits' });
     }
 
@@ -121,25 +130,32 @@ async function deposit(req, res) {
 
 async function withdraw(req, res) {
   try {
-    const { amountSlon, method, phone, code } = req.body;
+    const { amountSlon, method, accountName, phone, transferNumber, code } = req.body;
     const amount = Number(amountSlon);
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ code: 'INVALID_AMOUNT', message: 'Invalid amount' });
     }
-    if (!['zaincash', 'mastercard'].includes(method)) {
+    if (!['zaincash', 'superqi', 'mastercard'].includes(method)) {
       return res.status(400).json({ code: 'INVALID_METHOD', message: 'Invalid withdrawal method' });
     }
     if (PLACEHOLDER_METHODS.has(method)) {
       return res.status(501).json({ code: 'METHOD_NOT_AVAILABLE', message: 'MasterCard withdrawals are not connected yet — this needs a real payment gateway account.' });
     }
-    if (method === 'zaincash' && !isValidZainCashPhone(phone)) {
-      return res.status(400).json({ code: 'INVALID_PHONE', message: 'Zain Cash number must start with 078 and be 11 digits' });
+    if (DISABLED_METHODS.has(method)) {
+      return res.status(423).json({ code: 'METHOD_DISABLED', message: 'Zain Cash withdrawals are temporarily disabled — please use Super Qi.' });
+    }
+    if (method === 'superqi' && (!accountName || !phone || !transferNumber)) {
+      return res.status(400).json({ code: 'MISSING_WITHDRAW_INFO', message: 'accountName, phone and transferNumber are required for Super Qi withdrawals' });
     }
 
     await requireTwoFactorIfEnabled(req.userId, code);
 
-    const tx = await walletsRepo.requestWithdrawal(req.userId, amount, method, { phone: phone || null });
+    const tx = await walletsRepo.requestWithdrawal(req.userId, amount, method, {
+      account_name: accountName || null,
+      phone: phone || null,
+      transfer_number: transferNumber || null,
+    });
     return res.status(201).json({ transaction: tx });
   } catch (err) {
     if (err.code === 'TWO_FA_REQUIRED' || err.code === 'OTP_INVALID' || err.code === 'OTP_EXPIRED') {

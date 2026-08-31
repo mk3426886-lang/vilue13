@@ -93,12 +93,21 @@ html[dir="ltr"] {
   --font-body: var(--font-en);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+}
+
+a, button, input, textarea, select, .btn, .quick-action, .method-card,
+.mkt-tab, .mkt-card, .mkt-fab, .bottom-nav a, .profile-menu-item, .icon-btn {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
 body {

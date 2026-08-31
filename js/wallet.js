@@ -25,11 +25,11 @@ const Vilue_Wallet = (() => {
     });
   }
 
-  async function withdraw({ amountSlon, method, phone, code }) {
+  async function withdraw({ amountSlon, method, accountName, phone, transferNumber, code }) {
     return Vilue_Api.request('/wallet/withdraw', {
       method: 'POST',
       headers: Vilue_Auth.authHeader(),
-      body: { amountSlon, method, phone, code },
+      body: { amountSlon, method, accountName, phone, transferNumber, code },
     });
   }
 

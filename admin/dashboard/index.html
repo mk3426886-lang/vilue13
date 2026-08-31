@@ -239,7 +239,11 @@
       const method = tx.meta && tx.meta.method ? (methodLabels[tx.meta.method] || tx.meta.method) : '—';
       const extra = type === 'deposit'
         ? `<div class="admin-row"><span>اسم المُرسِل</span><strong>${(tx.meta && tx.meta.sender_account_name) || '—'}</strong></div>`
-        : `<div class="admin-row"><span>رقم الاستلام</span><strong dir="ltr">${(tx.meta && tx.meta.phone) || '—'}</strong></div>`;
+        : `
+          <div class="admin-row"><span>اسم صاحب الحساب</span><strong>${(tx.meta && tx.meta.account_name) || '—'}</strong></div>
+          <div class="admin-row"><span>رقم الهاتف</span><strong dir="ltr">${(tx.meta && tx.meta.phone) || '—'}</strong></div>
+          <div class="admin-row"><span>رقم التحويل</span><strong dir="ltr">${(tx.meta && tx.meta.transfer_number) || '—'}</strong></div>
+        `;
 
       return `
         <div class="admin-card" data-tx-id="${tx.id}">

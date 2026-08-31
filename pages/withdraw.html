@@ -22,8 +22,12 @@
       <p class="auth-subtitle" id="balance-line">الرصيد المتاح: —</p>
 
       <div class="method-grid" id="method-grid">
-        <button type="button" class="method-card is-active" data-method="zaincash">
+        <button type="button" class="method-card is-disabled" data-method="zaincash">
           <span class="method-name">زين كاش</span>
+          <span class="method-badge">متوقف مؤقتاً</span>
+        </button>
+        <button type="button" class="method-card is-active" data-method="superqi">
+          <span class="method-name">سوبر كي</span>
         </button>
         <button type="button" class="method-card is-disabled" data-method="mastercard">
           <span class="method-name">ماستركارد</span>
@@ -39,9 +43,19 @@
         </div>
 
         <div class="field">
-          <label class="field-label" for="phone">رقم زين كاش</label>
-          <input class="field-input" id="phone" type="tel" placeholder="0781234567" required dir="ltr">
-          <span class="field-error" id="phone-error" hidden>يجب أن يبدأ الرقم بـ 078 ويتكون من 11 رقم</span>
+          <label class="field-label" for="accountName">اسم صاحب حساب سوبر كي</label>
+          <input class="field-input" id="accountName" type="text" placeholder="الاسم كما يظهر بحساب سوبر كي" required>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="phone">رقم الهاتف</label>
+          <input class="field-input" id="phone" type="tel" placeholder="07xxxxxxxxx" required dir="ltr">
+          <span class="field-error" id="phone-error" hidden>أدخل رقم هاتف عراقي صحيح (07 ويتكون من 11 رقم)</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="transferNumber">رقم التحويل (حساب سوبر كي المستلِم)</label>
+          <input class="field-input" id="transferNumber" type="text" placeholder="رقم حساب سوبر كي المستلِم" required dir="ltr">
         </div>
 
         <div id="twofa-block" style="display:none;">
@@ -64,7 +78,7 @@
   </div>
 
   <style>
-    .method-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); margin-bottom: var(--sp-6); }
+    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); margin-bottom: var(--sp-6); }
     .method-card {
       background: var(--c-white); border: 1.5px solid var(--color-border); border-radius: var(--radius-md);
       padding: var(--sp-3) var(--sp-2); font-size: var(--fs-xs); font-weight: 700; color: var(--color-text-muted);
@@ -94,6 +108,17 @@
         const wallet = await Vilue_Wallet.getMyWallet();
         Vilue_Utils.qs('#balance-line').textContent = `الرصيد المتاح: ${Vilue_Utils.formatSlon(wallet.balanceSlon)} سلون`;
       } catch (e) { /* leave default text */ }
+
+      Vilue_Utils.qsa('.method-card').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (btn.classList.contains('is-disabled')) {
+            const msg = btn.dataset.method === 'zaincash'
+              ? 'سحب زين كاش متوقف مؤقتاً، استخدم سوبر كي'
+              : 'طريقة ماستركارد قادمة قريباً';
+            Vilue_Utils.showToast(msg, 'default');
+          }
+        });
+      });
 
       const amountInput = Vilue_Utils.qs('#amount');
       const iqdHint = Vilue_Utils.qs('#iqd-hint');
@@ -125,7 +150,9 @@
         e.preventDefault();
         const submitBtn = Vilue_Utils.qs('#submit-btn');
         const amountSlon = Number(amountInput.value);
+        const accountName = Vilue_Utils.qs('#accountName').value.trim();
         const phone = Vilue_Utils.qs('#phone').value.trim();
+        const transferNumber = Vilue_Utils.qs('#transferNumber').value.trim();
         const code = Vilue_Utils.qs('#twofa-code').value.trim();
         const phoneError = Vilue_Utils.qs('#phone-error');
         phoneError.hidden = true;
@@ -134,14 +161,22 @@
           Vilue_Utils.showToast('أدخل مبلغاً صحيحاً', 'error');
           return;
         }
-        if (!Vilue_Utils.isValidZainCashPhone(phone)) {
+        if (!accountName) {
+          Vilue_Utils.showToast('أدخل اسم صاحب حساب سوبر كي', 'error');
+          return;
+        }
+        if (!Vilue_Utils.isValidIraqiPhone(phone)) {
           phoneError.hidden = false;
+          return;
+        }
+        if (!transferNumber) {
+          Vilue_Utils.showToast('أدخل رقم التحويل (حساب سوبر كي المستلِم)', 'error');
           return;
         }
 
         Vilue_Utils.setLoading(submitBtn, true);
         try {
-          await Vilue_Wallet.withdraw({ amountSlon, method: 'zaincash', phone, code: code || undefined });
+          await Vilue_Wallet.withdraw({ amountSlon, method: 'superqi', accountName, phone, transferNumber, code: code || undefined });
           Vilue_Utils.showToast('تم إرسال طلب السحب، بانتظار المراجعة', 'success');
           setTimeout(() => { window.location.href = 'wallet.html'; }, 1200);
         } catch (err) {

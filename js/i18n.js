@@ -74,7 +74,15 @@ const Vilue_I18n = (() => {
 
   async function setLanguage(lang, { persist = true } = {}) {
     if (!SUPPORTED.includes(lang)) lang = DEFAULT_LANG;
-    dict = await loadDictionary(lang);
+    try {
+      dict = await loadDictionary(lang);
+    } catch (e) {
+      // Locale file failed to load (slow/cold server, offline, etc).
+      // Don't throw — keep whatever text is already hard-coded in the
+      // page and just switch the language flag/direction so the rest
+      // of the app (buttons, forms) still becomes interactive.
+      dict = dict || {};
+    }
     currentLang = lang;
     applyDirection(lang);
     applyTranslations();
@@ -82,7 +90,7 @@ const Vilue_I18n = (() => {
     if (persist) {
       try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) { /* ignore */ }
       if (window.Vilue_Auth && Vilue_Auth.isAuthenticated()) {
-        Vilue_Auth.persistLanguageToAccount(lang);
+        Vilue_Auth.persistLanguageToAccount(lang).catch(() => { /* non-critical */ });
       }
     }
 
@@ -91,7 +99,14 @@ const Vilue_I18n = (() => {
 
   async function init() {
     const lang = getStoredLang();
-    await setLanguage(lang, { persist: false });
+    try {
+      await setLanguage(lang, { persist: false });
+    } catch (e) {
+      // Absolute last-resort fallback — never let init() throw, since
+      // app.js awaits this before wiring up any page buttons.
+      currentLang = lang;
+      applyDirection(lang);
+    }
   }
 
   function getLang() {
