@@ -8,7 +8,7 @@
  * once it's enabled.
  */
 
-const Vilue_Auth = (() => {
+window.Vilue_Auth = (() => {
   const SESSION_TOKEN_KEY = 'vilue_session_token';
   const SESSION_USER_KEY = 'vilue_session_user';
   const DEVICE_ID_KEY = 'vilue_device_id';

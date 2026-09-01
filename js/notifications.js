@@ -2,7 +2,7 @@
  * Vilue — notifications module (frontend)
  */
 
-const Vilue_Notifications = (() => {
+window.Vilue_Notifications = (() => {
   async function list() {
     return Vilue_Api.request('/notifications', { headers: Vilue_Auth.authHeader() });
   }

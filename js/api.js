@@ -11,11 +11,11 @@
  * or wallet to work.
  */
 
-const Vilue_API_CONFIG = {
+window.Vilue_API_CONFIG = {
   BASE_URL: 'https://vilue.koyeb.app/api/v1',
 };
 
-const Vilue_Api = (() => {
+window.Vilue_Api = (() => {
   async function request(path, { method = 'GET', body, headers = {} } = {}) {
     let res;
     try {

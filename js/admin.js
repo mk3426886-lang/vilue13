@@ -4,7 +4,7 @@
  * backend re-checks this on every request regardless of what the UI shows.
  */
 
-const Vilue_Admin = (() => {
+window.Vilue_Admin = (() => {
   async function listUsers() {
     return Vilue_Api.request('/admin/users', { headers: Vilue_Auth.authHeader() });
   }

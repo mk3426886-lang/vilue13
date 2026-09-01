@@ -20,7 +20,26 @@ const telegramRoutes = require('../routes/telegram.routes');
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(helmet());
+
+// Vilue's frontend pages rely heavily on inline <script> blocks and
+// inline onclick="" attributes for page-specific logic (wallet, tasks,
+// marketplace, deposit/withdraw, admin dashboard, etc.), and load
+// avatar/product images from Supabase Storage (a different origin).
+// Helmet's default Content-Security-Policy blocks BOTH of those
+// silently (no console-visible crash on most setups) — that's why
+// buttons across almost every page looked "dead" until a refresh, and
+// why it wasn't consistent: it depended on whether the page's own
+// logic happened to be inline or in an external js/*.js file.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'script-src': ["'self'", "'unsafe-inline'"],
+      'script-src-attr': ["'self'", "'unsafe-inline'"],
+      'img-src': ["'self'", 'data:', 'https:'],
+    },
+  },
+}));
 app.use(cors());
 
 app.use(express.json({ limit: '6mb' }));
