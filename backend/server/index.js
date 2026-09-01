@@ -20,6 +20,7 @@ const telegramRoutes = require('../routes/telegram.routes');
 
 const app = express();
 app.set('trust proxy', 1);
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
