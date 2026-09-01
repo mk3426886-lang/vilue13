@@ -28,8 +28,6 @@ async function populateGovernorates() {
 }
 
 function initRegisterEvents() {
-  alert('1) الكود بدا يشتغل — initRegisterEvents');
-
   // 1. تفعيل زر الرجوع
   const backBtn = document.getElementById('back-btn') || document.querySelector('.back-btn');
   if (backBtn) {
@@ -47,14 +45,9 @@ function initRegisterEvents() {
   const form = document.getElementById('register-form');
   const submitBtn = document.getElementById('register-submit');
 
-  if (!form) {
-    alert('2) خطأ: ما لقيت الفورم #register-form بالصفحة!');
-    return;
-  }
-  alert('2) الفورم موجود، وربطت زر الإرسال بنجاح');
+  if (!form) return;
 
   form.addEventListener('submit', async (e) => {
-    alert('3) ضغطت متابعة — الفورم استقبل الضغطة');
     e.preventDefault();
     e.stopPropagation();
 
@@ -112,15 +105,11 @@ function initRegisterEvents() {
       hasError = true;
     }
 
-    alert('4) نتيجة التحقق من الحقول — فيه خطأ؟ ' + hasError + ' | governorate=' + governorate + ' | terms=' + termsAccepted);
-
     if (hasError) return false;
 
     if (window.Vilue_Utils && typeof Vilue_Utils.setLoading === 'function') {
       Vilue_Utils.setLoading(submitBtn, true);
     }
-
-    alert('5) راح أتصل بـ Vilue_Auth.register الآن — Vilue_Auth موجود؟ ' + !!window.Vilue_Auth);
 
     try {
       if (window.Vilue_Auth && typeof Vilue_Auth.register === 'function') {
@@ -129,15 +118,11 @@ function initRegisterEvents() {
           name, email: contact, password, referralId,
           country: 'IQ', governorate, lang,
         });
-        alert('6) نجح التسجيل! userId=' + (result && result.userId));
         sessionStorage.setItem('vilue_pending_user_id', result.userId || 'demo');
         sessionStorage.setItem('vilue_pending_contact', contact);
         window.location.href = 'verify.html';
-      } else {
-        alert('5-خطأ) Vilue_Auth.register مو موجود أو مو دالة!');
       }
     } catch (err) {
-      alert('خطأ فعلي وصل! code=' + err.code + ' | message=' + err.message);
       if (err.code === 'DUPLICATE_ACCOUNT') {
         if (contactError) {
           contactError.textContent = 'هذا الحساب مستخدم بالفعل';
