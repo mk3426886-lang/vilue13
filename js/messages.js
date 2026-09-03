@@ -4,7 +4,7 @@
  * conversation on an interval rather than receiving instant push updates.
  */
 
-window.Vilue_Messages = (() => {
+const Vilue_Messages = (() => {
   async function getConversation(friendId) {
     return Vilue_Api.request(`/messages/${friendId}`, { headers: Vilue_Auth.authHeader() });
   }

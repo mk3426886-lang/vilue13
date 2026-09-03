@@ -2,7 +2,7 @@
  * Vilue — friends module (frontend)
  */
 
-window.Vilue_Friends = (() => {
+const Vilue_Friends = (() => {
   async function sendRequest(receiverId) {
     return Vilue_Api.request('/friends/requests', {
       method: 'POST', headers: Vilue_Auth.authHeader(), body: { receiverId },

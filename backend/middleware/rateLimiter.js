@@ -7,8 +7,8 @@
 const rateLimit = require('express-rate-limit');
 
 const authLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  max: 1000,
+  windowMs: 15 * 60 * 1000,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests, please try again later.', code: 'RATE_LIMITED' },

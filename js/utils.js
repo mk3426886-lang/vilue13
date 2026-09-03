@@ -2,7 +2,7 @@
  * Vilue — shared utilities
  */
 
-window.Vilue_Utils = (() => {
+const Vilue_Utils = (() => {
   function qs(selector, root = document) {
     return root.querySelector(selector);
   }

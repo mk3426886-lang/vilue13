@@ -27,23 +27,12 @@ function getTransporter() {
     );
   }
 
-  // Koyeb (and most PaaS hosts) block/throttle outbound SMTP on port 465
-  // for datacenter IPs — connections either hang or get silently dropped,
-  // which is why registration could look like it "does nothing" (the
-  // request never resolves). Port 587 with STARTTLS is what Koyeb's own
-  // docs recommend, and short timeouts make any real failure surface as
-  // a clear error instead of an indefinite hang.
   transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // STARTTLS, upgraded automatically after connecting
+    service: 'gmail',
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
   });
 
   return transporter;

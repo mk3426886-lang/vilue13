@@ -8,7 +8,7 @@
  *   <input data-i18n-placeholder="auth.namePlaceholder">
  */
 
-window.Vilue_I18n = (() => {
+const Vilue_I18n = (() => {
   const SUPPORTED = ['ar', 'en'];
   const DEFAULT_LANG = 'ar';
   const STORAGE_KEY = 'vilue_lang';

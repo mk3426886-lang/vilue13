@@ -93,7 +93,6 @@ async function register(req, res) {
 
     return res.status(201).json({ userId: user.id, message: 'verification_code_sent' });
   } catch (err) {
-    console.error('[register] failed:', err.message);
     return res.status(500).json({ code: 'REGISTER_FAILED', message: err.message });
   }
 }

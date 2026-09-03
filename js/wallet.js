@@ -4,7 +4,7 @@
  * change real balances in Supabase.
  */
 
-window.Vilue_Wallet = (() => {
+const Vilue_Wallet = (() => {
   async function getMyWallet() {
     return Vilue_Api.request('/wallet/me', { headers: Vilue_Auth.authHeader() });
   }

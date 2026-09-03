@@ -3,7 +3,7 @@
  * "المهام" — Telegram channel-join campaigns.
  */
 
-window.Vilue_Tasks = (() => {
+const Vilue_Tasks = (() => {
   async function create({ channelUsername, rewardPerJoin, targetJoins }) {
     return Vilue_Api.request('/tasks', {
       method: 'POST', headers: Vilue_Auth.authHeader(), body: { channelUsername, rewardPerJoin, targetJoins },
