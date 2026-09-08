@@ -93,6 +93,7 @@ async function register(req, res) {
 
     return res.status(201).json({ userId: user.id, message: 'verification_code_sent' });
   } catch (err) {
+    console.error('[register] failed:', err.message);
     return res.status(500).json({ code: 'REGISTER_FAILED', message: err.message });
   }
 }
@@ -203,9 +204,22 @@ async function login(req, res) {
       }
     }
 
-    const sessionId = await sessionService.establishSession(user.id, deviceId);
-    const token = issueToken(user, sessionId);
-    return res.status(200).json({ token, user: toPublicUser(user) });
+    // Login verification — separate from the wallet 2FA (two_fa_enabled,
+    // used for withdrawals/transfers). Every successful password check
+    // now requires an emailed code before a session is issued, so a
+    // leaked password alone can't log in to the account.
+    await otpService.requestOtp({
+      userId: user.id,
+      contact: user.email,
+      contactType: 'email',
+      lang: user.language || 'ar',
+    });
+
+    return res.status(200).json({
+      loginVerificationRequired: true,
+      userId: user.id,
+      message: 'login_code_sent',
+    });
   } catch (err) {
     if (err.code === 'DEVICE_SWITCH_COOLDOWN') {
       return res.status(403).json({ code: err.code, message: err.message, retryAt: err.retryAt });

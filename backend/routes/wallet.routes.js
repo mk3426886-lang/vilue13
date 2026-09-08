@@ -10,6 +10,7 @@ router.post('/2fa/send-code', requireAuth, walletController.sendTwoFactorCode);
 router.post('/deposit', requireAuth, walletController.deposit);
 router.post('/withdraw', requireAuth, walletController.withdraw);
 router.post('/withdraw/:transactionId/cancel', requireAuth, walletController.cancelWithdrawal);
+router.get('/lookup-recipient', requireAuth, walletController.lookupRecipient);
 router.post('/transfer', requireAuth, walletController.transfer);
 
 module.exports = router;

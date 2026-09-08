@@ -32,7 +32,13 @@ document.addEventListener('vilue:app-ready', () => {
 
     Vilue_Utils.setLoading(submitBtn, true);
     try {
-      await Vilue_Auth.login(identifier, password);
+      const result = await Vilue_Auth.login(identifier, password);
+      if (result && result.loginVerificationRequired) {
+        sessionStorage.setItem('vilue_pending_user_id', result.userId);
+        sessionStorage.setItem('vilue_pending_contact', identifier);
+        window.location.href = 'verify.html';
+        return;
+      }
       Vilue_Utils.showToast('OK', 'success');
       window.location.href = 'home.html';
     } catch (err) {

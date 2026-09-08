@@ -8,7 +8,7 @@
  * once it's enabled.
  */
 
-const Vilue_Auth = (() => {
+window.Vilue_Auth = (() => {
   const SESSION_TOKEN_KEY = 'vilue_session_token';
   const SESSION_USER_KEY = 'vilue_session_user';
   const DEVICE_ID_KEY = 'vilue_device_id';
@@ -95,7 +95,12 @@ const Vilue_Auth = (() => {
     const result = await Vilue_Api.request('/auth/login', {
       method: 'POST', body: { identifier, password, deviceId: getDeviceId() },
     });
-    saveSession(result.token, result.user);
+    // Normal path now: login() sends an emailed code and returns
+    // { loginVerificationRequired: true, userId } instead of a session —
+    // the caller (login.js) redirects to verify.html to complete it.
+    if (result.token) {
+      saveSession(result.token, result.user);
+    }
     return result;
   }
 

@@ -153,34 +153,45 @@
         return;
       }
 
-      const user = await Vilue_Auth.loadSession();
-      if (user) {
+      // These five calls don't depend on each other, so they're fired
+      // together instead of one after another — each is a full network
+      // round trip, and waiting for them in sequence was the main
+      // reason this page felt slow to load.
+      const [userResult, walletResult, txResult, settingsResult, notifResult] = await Promise.allSettled([
+        Vilue_Auth.loadSession(),
+        Vilue_Wallet.getMyWallet(),
+        Vilue_Wallet.getMyTransactions(),
+        Vilue_Api.request('/settings/public'),
+        Vilue_Notifications.unreadCount(),
+      ]);
+
+      if (userResult.status === 'fulfilled' && userResult.value) {
+        const user = userResult.value;
         Vilue_Utils.qs('.avatar').textContent = user.name ? user.name.trim().charAt(0) : '؟';
       }
 
-      try {
-        const wallet = await Vilue_Wallet.getMyWallet();
+      if (walletResult.status === 'fulfilled') {
+        const wallet = walletResult.value;
         Vilue_Utils.qs('#balance-slon').innerHTML =
           `${Vilue_Utils.formatSlon(wallet.balanceSlon)} <span style="font-size:16px;">سلون</span>`;
         Vilue_Utils.qs('#balance-iqd').textContent =
           `≈ ${Vilue_Utils.formatSlon(wallet.balanceIqd)} دينار عراقي`;
-      } catch (err) {
+      } else {
         Vilue_Utils.qs('#balance-slon').textContent = '—';
         Vilue_Utils.qs('#balance-iqd').textContent =
-          err.code === 'BACKEND_UNREACHABLE'
+          walletResult.reason && walletResult.reason.code === 'BACKEND_UNREACHABLE'
             ? 'تعذّر الاتصال بالسيرفر'
             : 'تعذّر تحميل الرصيد';
       }
 
-      try {
-        const { transactions } = await Vilue_Wallet.getMyTransactions();
-        renderTxPreview(transactions);
-      } catch (err) {
+      if (txResult.status === 'fulfilled') {
+        renderTxPreview(txResult.value.transactions);
+      } else {
         Vilue_Utils.qs('#tx-preview').innerHTML = `<div class="card" style="text-align:center; padding: var(--sp-6); color: var(--color-text-muted); font-size: var(--fs-sm);">تعذّر تحميل المعاملات</div>`;
       }
 
-      try {
-        const { settings } = await Vilue_Api.request('/settings/public');
+      if (settingsResult.status === 'fulfilled') {
+        const { settings } = settingsResult.value;
         if (settings.news_ticker_text) {
           Vilue_Utils.qs('#news-ticker-text').textContent = settings.news_ticker_text;
           Vilue_Utils.qs('#news-ticker').style.display = 'flex';
@@ -195,12 +206,11 @@
           }
           if (settings.promo_banner_text) banner.textContent = settings.promo_banner_text;
         }
-      } catch (err) { /* banner/ticker are optional — fail silently */ }
+      } // banner/ticker are optional — fail silently
 
-      try {
-        const { count } = await Vilue_Notifications.unreadCount();
-        if (count > 0) Vilue_Utils.qs('#notif-dot').style.display = 'block';
-      } catch (err) { /* non-critical */ }
+      if (notifResult.status === 'fulfilled' && notifResult.value.count > 0) {
+        Vilue_Utils.qs('#notif-dot').style.display = 'block';
+      }
     });
   </script>
 </body>

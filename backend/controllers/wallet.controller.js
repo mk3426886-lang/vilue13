@@ -25,9 +25,13 @@ const walletsRepo = require('../database/wallets.repo');
 const otpService = require('../services/otp.service');
 const { uploadReceiptImage } = require('../services/storage.service');
 
-const PLACEHOLDER_METHODS = new Set(['mastercard']);
+// MasterCard now runs the same manual-review flow as Super Qi for
+// deposits (no placeholder left there). Withdrawal keeps MasterCard as
+// a placeholder — that wasn't part of this change.
+const DEPOSIT_PLACEHOLDER_METHODS = new Set();
+const WITHDRAW_PLACEHOLDER_METHODS = new Set(['mastercard']);
 // Kept as real, previously-supported methods but switched off for now —
-// distinct from PLACEHOLDER_METHODS (which were never connected at all).
+// distinct from the placeholder sets (which were never connected at all).
 const DISABLED_METHODS = new Set(['zaincash']);
 
 async function requireTwoFactorIfEnabled(userId, code) {
@@ -93,27 +97,27 @@ async function deposit(req, res) {
     if (!['zaincash', 'superqi', 'mastercard'].includes(method)) {
       return res.status(400).json({ code: 'INVALID_METHOD', message: 'Invalid deposit method' });
     }
-    if (PLACEHOLDER_METHODS.has(method)) {
-      return res.status(501).json({ code: 'METHOD_NOT_AVAILABLE', message: 'MasterCard deposits are not connected yet — this needs a real payment gateway account.' });
+    if (DEPOSIT_PLACEHOLDER_METHODS.has(method)) {
+      return res.status(501).json({ code: 'METHOD_NOT_AVAILABLE', message: 'This deposit method is not connected yet.' });
     }
     if (DISABLED_METHODS.has(method)) {
       return res.status(423).json({ code: 'METHOD_DISABLED', message: 'Zain Cash deposits are temporarily disabled — please use Super Qi.' });
     }
-    if (method === 'superqi' && !senderAccountName) {
+    if (!senderAccountName) {
       return res.status(400).json({ code: 'MISSING_SENDER_INFO', message: 'senderAccountName is required for manual-review deposits' });
     }
+    if (!receiptImageBase64) {
+      return res.status(400).json({ code: 'MISSING_RECEIPT', message: 'A transfer receipt screenshot is required for all deposits' });
+    }
 
-    // Receipt image is optional — helps admin review go faster, but a
-    // deposit request can be submitted without one.
-    let receiptUrl = null;
-    if (receiptImageBase64) {
-      try {
-        receiptUrl = await uploadReceiptImage(req.userId, receiptImageBase64);
-      } catch (uploadErr) {
-        // Don't fail the whole deposit request just because the optional
-        // image upload failed — proceed without it.
-        receiptUrl = null;
-      }
+    // Receipt image is now mandatory (Super Qi and MasterCard both use
+    // the same manual-review flow) — a failed upload fails the whole
+    // request instead of silently proceeding without it.
+    let receiptUrl;
+    try {
+      receiptUrl = await uploadReceiptImage(req.userId, receiptImageBase64);
+    } catch (uploadErr) {
+      return res.status(500).json({ code: 'RECEIPT_UPLOAD_FAILED', message: 'Failed to upload the receipt image — please try again' });
     }
 
     const tx = await walletsRepo.requestDeposit(req.userId, amount, method, {
@@ -139,7 +143,7 @@ async function withdraw(req, res) {
     if (!['zaincash', 'superqi', 'mastercard'].includes(method)) {
       return res.status(400).json({ code: 'INVALID_METHOD', message: 'Invalid withdrawal method' });
     }
-    if (PLACEHOLDER_METHODS.has(method)) {
+    if (WITHDRAW_PLACEHOLDER_METHODS.has(method)) {
       return res.status(501).json({ code: 'METHOD_NOT_AVAILABLE', message: 'MasterCard withdrawals are not connected yet — this needs a real payment gateway account.' });
     }
     if (DISABLED_METHODS.has(method)) {
@@ -205,7 +209,32 @@ async function transfer(req, res) {
   }
 }
 
+// Lets the transfer page show the recipient's name before the user
+// confirms — only exposes name + displayId, nothing sensitive.
+async function lookupRecipient(req, res) {
+  try {
+    const { displayId } = req.query;
+    if (!displayId || !/^\d{6,12}$/.test(displayId.trim())) {
+      return res.status(400).json({ code: 'INVALID_RECEIVER_ID', message: 'Invalid receiver ID' });
+    }
+    const user = await usersRepo.findByDisplayId(displayId.trim());
+    if (!user) {
+      return res.status(404).json({ code: 'RECEIVER_NOT_FOUND', message: 'No user with that ID' });
+    }
+    if (user.id === req.userId) {
+      return res.status(400).json({ code: 'CANNOT_TRANSFER_TO_SELF', message: 'You cannot transfer to yourself' });
+    }
+    return res.status(200).json({
+      name: user.name,
+      userId: user.display_user_id,
+      verificationBadge: user.is_owner ? 'owner' : (user.is_admin ? 'admin' : user.verification_badge),
+    });
+  } catch (err) {
+    return res.status(500).json({ code: 'LOOKUP_FAILED', message: err.message });
+  }
+}
+
 module.exports = {
   getMyWallet, getMyTransactions, sendTwoFactorCode,
-  deposit, withdraw, cancelWithdrawal, transfer,
+  deposit, withdraw, cancelWithdrawal, transfer, lookupRecipient,
 };

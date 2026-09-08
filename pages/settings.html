@@ -32,6 +32,14 @@
         </div>
       </div>
 
+      <div class="section-header"><h2>المظهر</h2></div>
+      <div class="profile-menu-group" style="margin-top:0;">
+        <div class="profile-menu-item">
+          <span class="pmi-label">الوضع الليلي</span>
+          <label class="toggle"><input type="checkbox" id="theme-toggle"><span class="toggle-track"></span></label>
+        </div>
+      </div>
+
       <div class="section-header"><h2>الأمان</h2></div>
       <div class="profile-menu-group" style="margin-top:0;">
         <div class="profile-menu-item">
@@ -91,6 +99,12 @@
   <script>
     document.addEventListener('vilue:app-ready', async () => {
       if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+      const themeToggle = Vilue_Utils.qs('#theme-toggle');
+      themeToggle.checked = Vilue_Theme.get() === 'dark';
+      themeToggle.addEventListener('change', () => {
+        Vilue_Theme.set(themeToggle.checked ? 'dark' : 'light');
+      });
 
       const user = await Vilue_Auth.loadSession();
       const toggle = Vilue_Utils.qs('#twofa-toggle');

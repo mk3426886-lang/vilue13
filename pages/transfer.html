@@ -12,7 +12,7 @@
 <body>
   <div class="auth-form-screen">
     <div class="auth-form-top">
-      <button class="back-btn" type="button" onclick="history.back()" aria-label="Back">
+      <button class="back-btn" type="button" id="back-btn" aria-label="Back">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -24,8 +24,21 @@
       <form id="transfer-form" novalidate>
         <div class="field">
           <label class="field-label" for="receiverId">معرّف المستلم (12 رقم)</label>
-          <input class="field-input" id="receiverId" type="text" inputmode="numeric" placeholder="أدخل معرّف المستلم" dir="ltr" required>
+          <div style="display:flex; gap:8px;">
+            <input class="field-input" id="receiverId" type="text" inputmode="numeric" placeholder="أدخل معرّف المستلم" dir="ltr" required style="flex:1;">
+            <button type="button" id="search-btn" class="btn-sm" style="border-radius:12px; padding:0 16px; white-space:nowrap;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:-3px;"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              بحث
+            </button>
+          </div>
           <span class="field-error" id="receiver-error" hidden></span>
+          <div id="recipient-card" style="display:none; margin-top:10px; padding:12px 14px; background:var(--c-bg-field); border-radius:12px; align-items:center; gap:10px;">
+            <div style="width:38px; height:38px; border-radius:50%; background:var(--color-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;">✓</div>
+            <div>
+              <div style="font-weight:700; font-size:var(--fs-sm);" id="recipient-name"></div>
+              <div style="font-size:11px; color:var(--color-text-muted);" id="recipient-id" dir="ltr"></div>
+            </div>
+          </div>
         </div>
 
         <div class="field">
@@ -49,6 +62,40 @@
     </div>
   </div>
 
+  <!-- شاشة تأكيد التحويل -->
+  <div id="confirm-overlay" style="display:none; position:fixed; inset:0; background:rgba(11,19,48,0.55); z-index:200; align-items:flex-end; justify-content:center;">
+    <div style="background:#fff; width:100%; max-width:480px; border-radius:24px 24px 0 0; padding:28px 22px 32px; text-align:center; animation:slideUp .25s ease;">
+      <div style="width:56px; height:56px; border-radius:50%; background:var(--c-bg-field); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:22px; font-weight:800; color:var(--color-primary);">؟</div>
+      <h2 style="margin:0 0 6px; font-size:18px; color:var(--color-primary);">تأكيد التحويل</h2>
+      <p style="margin:0 0 20px; font-size:13px; color:var(--color-text-muted);">تأكد من بيانات المستلم قبل المتابعة</p>
+
+      <div style="background:var(--c-bg-field); border-radius:16px; padding:16px; margin-bottom:20px; text-align:start;">
+        <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span style="color:var(--color-text-muted);">المستلم</span><strong id="confirm-name"></strong></div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span style="color:var(--color-text-muted);">المعرّف</span><strong id="confirm-id" dir="ltr"></strong></div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span style="color:var(--color-text-muted);">المبلغ</span><strong id="confirm-amount" style="color:var(--color-primary);"></strong></div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button type="button" id="confirm-cancel" class="btn" style="flex:1; background:var(--c-bg-field); color:var(--color-primary);">إلغاء</button>
+        <button type="button" id="confirm-ok" class="btn btn-primary" style="flex:1;">تأكيد التحويل</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- شاشة نجاح الدفع -->
+  <div id="success-overlay" style="display:none; position:fixed; inset:0; background:#fff; z-index:210; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
+    <div id="success-check" style="width:84px; height:84px; border-radius:50%; background:#16C784; display:flex; align-items:center; justify-content:center; margin-bottom:20px; animation:popIn .4s ease;">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2 style="margin:0 0 6px; font-size:20px; color:var(--color-primary);">تم التحويل بنجاح</h2>
+    <p id="success-amount" style="margin:0; font-size:15px; color:var(--color-text-muted);"></p>
+  </div>
+
+  <style>
+    @keyframes slideUp { from { transform: translateY(40px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    @keyframes popIn { 0% { transform: scale(0.4); opacity:0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity:1; } }
+  </style>
+
   <script src="../js/i18n.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/api.js"></script>
@@ -56,8 +103,35 @@
   <script src="../js/wallet.js"></script>
   <script src="../js/app.js"></script>
   <script>
+    // نغمة نجاح بسيطة مولّدة مباشرة بالمتصفح (بدون ملف صوتي خارجي)
+    function playSuccessChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [880, 1175]; // نغمتين صاعدتين
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const start = ctx.currentTime + i * 0.12;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.4);
+        });
+      } catch (e) { /* audio not available — silently skip */ }
+    }
+
     document.addEventListener('vilue:app-ready', async () => {
       if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+      Vilue_Utils.qs('#back-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'wallet.html';
+      });
 
       const user = await Vilue_Auth.loadSession();
       if (user && user.twoFaEnabled) {
@@ -71,10 +145,58 @@
 
       const amountInput = Vilue_Utils.qs('#amount');
       const iqdHint = Vilue_Utils.qs('#iqd-hint');
+      const receiverInput = Vilue_Utils.qs('#receiverId');
+      const receiverError = Vilue_Utils.qs('#receiver-error');
+      const recipientCard = Vilue_Utils.qs('#recipient-card');
+      const searchBtn = Vilue_Utils.qs('#search-btn');
+
+      let confirmedRecipient = null; // { name, userId }
+
       amountInput.addEventListener('input', () => {
         const v = Number(amountInput.value) || 0;
         iqdHint.textContent = v ? `≈ ${Vilue_Utils.formatSlon(v / 5)} دينار عراقي` : '';
       });
+
+      // البحث عن اسم المستلم يفعّل تلقائياً كل مرة يتغير فيها الرقم
+      receiverInput.addEventListener('input', () => {
+        confirmedRecipient = null;
+        recipientCard.style.display = 'none';
+        receiverError.hidden = true;
+      });
+
+      async function doLookup() {
+        const receiverId = receiverInput.value.trim();
+        receiverError.hidden = true;
+        recipientCard.style.display = 'none';
+        confirmedRecipient = null;
+
+        if (!/^\d{6,12}$/.test(receiverId)) {
+          receiverError.textContent = 'أدخل معرّفاً صحيحاً';
+          receiverError.hidden = false;
+          return;
+        }
+
+        searchBtn.disabled = true;
+        try {
+          const result = await Vilue_Wallet.lookupRecipient(receiverId);
+          confirmedRecipient = { name: result.name, userId: result.userId };
+          Vilue_Utils.qs('#recipient-name').textContent = result.name;
+          Vilue_Utils.qs('#recipient-id').textContent = `#${result.userId}`;
+          recipientCard.style.display = 'flex';
+        } catch (err) {
+          if (err.code === 'RECEIVER_NOT_FOUND') {
+            receiverError.textContent = 'لا يوجد مستخدم بهذا المعرّف';
+          } else if (err.code === 'CANNOT_TRANSFER_TO_SELF') {
+            receiverError.textContent = 'لا يمكنك التحويل لنفسك';
+          } else {
+            receiverError.textContent = err.message;
+          }
+          receiverError.hidden = false;
+        } finally {
+          searchBtn.disabled = false;
+        }
+      }
+      searchBtn.addEventListener('click', doLookup);
 
       Vilue_Utils.qs('#send-code-btn').addEventListener('click', async (e) => {
         e.preventDefault();
@@ -95,17 +217,15 @@
         }
       });
 
+      const confirmOverlay = Vilue_Utils.qs('#confirm-overlay');
+      const successOverlay = Vilue_Utils.qs('#success-overlay');
+
       Vilue_Utils.qs('#transfer-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const submitBtn = Vilue_Utils.qs('#submit-btn');
-        const receiverId = Vilue_Utils.qs('#receiverId').value.trim();
         const amountSlon = Number(amountInput.value);
-        const code = Vilue_Utils.qs('#twofa-code').value.trim();
-        const receiverError = Vilue_Utils.qs('#receiver-error');
-        receiverError.hidden = true;
 
-        if (!/^\d{6,12}$/.test(receiverId)) {
-          receiverError.textContent = 'أدخل معرّفاً صحيحاً';
+        if (!confirmedRecipient) {
+          receiverError.textContent = 'اضغط بحث أول للتأكد من اسم المستلم';
           receiverError.hidden = false;
           return;
         }
@@ -114,23 +234,37 @@
           return;
         }
 
+        Vilue_Utils.qs('#confirm-name').textContent = confirmedRecipient.name;
+        Vilue_Utils.qs('#confirm-id').textContent = `#${confirmedRecipient.userId}`;
+        Vilue_Utils.qs('#confirm-amount').textContent = `${Vilue_Utils.formatSlon(amountSlon)} سلون`;
+        confirmOverlay.style.display = 'flex';
+      });
+
+      Vilue_Utils.qs('#confirm-cancel').addEventListener('click', () => {
+        confirmOverlay.style.display = 'none';
+      });
+
+      Vilue_Utils.qs('#confirm-ok').addEventListener('click', async () => {
+        const submitBtn = Vilue_Utils.qs('#confirm-ok');
+        const receiverId = receiverInput.value.trim();
+        const amountSlon = Number(amountInput.value);
+        const code = Vilue_Utils.qs('#twofa-code').value.trim();
+
         Vilue_Utils.setLoading(submitBtn, true);
         try {
           await Vilue_Wallet.transfer({ receiverId, amountSlon, code: code || undefined });
-          Vilue_Utils.showToast('تم التحويل بنجاح', 'success');
-          setTimeout(() => { window.location.href = 'wallet.html'; }, 1200);
+          confirmOverlay.style.display = 'none';
+          Vilue_Utils.qs('#success-amount').textContent = `${Vilue_Utils.formatSlon(amountSlon)} سلون إلى ${confirmedRecipient.name}`;
+          successOverlay.style.display = 'flex';
+          playSuccessChime();
+          setTimeout(() => { window.location.href = 'wallet.html'; }, 2200);
         } catch (err) {
+          confirmOverlay.style.display = 'none';
           if (err.code === 'TWO_FA_REQUIRED') {
             Vilue_Utils.qs('#twofa-block').style.display = 'block';
             Vilue_Utils.showToast('أدخل رمز التحقق أولاً', 'error');
-          } else if (err.code === 'RECEIVER_NOT_FOUND') {
-            receiverError.textContent = 'لا يوجد مستخدم بهذا المعرّف';
-            receiverError.hidden = false;
           } else if (err.code === 'INSUFFICIENT_BALANCE') {
             Vilue_Utils.showToast('رصيدك غير كافٍ لإتمام هذا التحويل', 'error');
-          } else if (err.code === 'CANNOT_TRANSFER_TO_SELF') {
-            receiverError.textContent = 'لا يمكنك التحويل لنفسك';
-            receiverError.hidden = false;
           } else {
             Vilue_Utils.showToast(err.message, 'error');
           }

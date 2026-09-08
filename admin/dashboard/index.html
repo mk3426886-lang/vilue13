@@ -238,7 +238,10 @@
       const u = tx.users || {};
       const method = tx.meta && tx.meta.method ? (methodLabels[tx.meta.method] || tx.meta.method) : '—';
       const extra = type === 'deposit'
-        ? `<div class="admin-row"><span>اسم المُرسِل</span><strong>${(tx.meta && tx.meta.sender_account_name) || '—'}</strong></div>`
+        ? `
+          <div class="admin-row"><span>اسم المُرسِل</span><strong>${(tx.meta && tx.meta.sender_account_name) || '—'}</strong></div>
+          ${(tx.meta && tx.meta.receipt_url) ? `<button type="button" class="btn-sm" data-view-receipt="${tx.meta.receipt_url}" style="margin-top:6px;">عرض صورة الإيصال</button>` : ''}
+        `
         : `
           <div class="admin-row"><span>اسم صاحب الحساب</span><strong>${(tx.meta && tx.meta.account_name) || '—'}</strong></div>
           <div class="admin-row"><span>رقم الهاتف</span><strong dir="ltr">${(tx.meta && tx.meta.phone) || '—'}</strong></div>
@@ -297,6 +300,19 @@
         const txId = card.dataset.txId;
         card.querySelector('.admin-approve').addEventListener('click', () => reviewTx(type, txId, 'approve'));
         card.querySelector('.admin-reject').addEventListener('click', () => reviewTx(type, txId, 'reject'));
+        const receiptBtn = card.querySelector('[data-view-receipt]');
+        if (receiptBtn) {
+          receiptBtn.addEventListener('click', async () => {
+            try {
+              const { url } = await Vilue_Api.request(`/admin/receipt-url?path=${encodeURIComponent(receiptBtn.dataset.viewReceipt)}`, {
+                headers: Vilue_Auth.authHeader(),
+              });
+              window.open(url, '_blank');
+            } catch (err) {
+              Vilue_Utils.showToast(err.message, 'error');
+            }
+          });
+        }
       });
     }
 

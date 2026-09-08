@@ -93,6 +93,41 @@ html[dir="ltr"] {
   --font-body: var(--font-en);
 }
 
+/* ---- Dark mode ----
+   Toggled via html[data-theme="dark"] (set from settings.html, applied
+   on every page by js/app.js). Because almost every color in this
+   codebase is written as var(--c-*) / var(--color-*) rather than a
+   hardcoded hex value, overriding the underlying tokens here cascades
+   dark mode across nearly the entire app automatically — cards, text,
+   borders, inputs, buttons, bottom nav, everything that already used
+   the design system. A handful of one-off inline colors elsewhere
+   (specific badges/accents) may not flip; flag those and they can be
+   adjusted individually. */
+html[data-theme="dark"] {
+  --c-navy-900: #EDEFF7;
+  --c-navy-800: #4C63D9;
+  --c-navy-700: #5D74E3;
+  --c-navy-600: #7387EC;
+
+  --c-white: #161B39;
+  --c-bg-soft: #0A0E22;
+  --c-bg-field: #212850;
+
+  --c-gray-500: #8A8FB0;
+  --c-gray-600: #A6ABCB;
+  --c-gray-700: #C7CBE6;
+
+  --color-border: #2B3262;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] img:not([src*=".svg"]) {
+  filter: brightness(0.92);
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -117,6 +152,28 @@ body {
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
+  animation: vilue-page-in 0.22s ease both;
+}
+
+@keyframes vilue-page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body { animation: none; }
+}
+
+/* لمسة موحّدة عند الضغط على أي عنصر تفاعلي — بطاقة، زر، تبويب — بدل ما
+   كل صفحة تعرّف سلوك ضغط مختلف بنفسها */
+a, button, .btn, .quick-action, .method-card, .mkt-tab, .mkt-card,
+.admin-card, .card[data-clickable], .profile-menu-item {
+  transition: transform 0.12s ease, opacity 0.12s ease, background-color 0.15s ease;
+}
+a:active, button:active, .btn:active, .quick-action:active, .method-card:active,
+.mkt-tab:active, .mkt-card:active, .admin-card:active, .profile-menu-item:active {
+  transform: scale(0.97);
+  opacity: 0.85;
 }
 
 h1, h2, h3, h4 { margin: 0; font-weight: 700; }

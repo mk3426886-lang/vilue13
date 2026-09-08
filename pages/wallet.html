@@ -173,22 +173,26 @@
     }
 
     async function loadEverything() {
-      try {
-        const wallet = await Vilue_Wallet.getMyWallet();
+      const [walletResult, txResult] = await Promise.allSettled([
+        Vilue_Wallet.getMyWallet(),
+        Vilue_Wallet.getMyTransactions(),
+      ]);
+
+      if (walletResult.status === 'fulfilled') {
+        const wallet = walletResult.value;
         Vilue_Utils.qs('#balance-slon').innerHTML =
           `${Vilue_Utils.formatSlon(wallet.balanceSlon)} <span style="font-size:16px;">سلون</span>`;
         Vilue_Utils.qs('#balance-iqd').textContent =
           `≈ ${Vilue_Utils.formatSlon(wallet.balanceIqd)} دينار عراقي`;
-      } catch (err) {
+      } else {
         Vilue_Utils.qs('#balance-slon').textContent = '—';
         Vilue_Utils.qs('#balance-iqd').textContent =
-          err.code === 'BACKEND_UNREACHABLE' ? 'تعذّر الاتصال بالسيرفر' : 'تعذّر تحميل الرصيد';
+          walletResult.reason && walletResult.reason.code === 'BACKEND_UNREACHABLE' ? 'تعذّر الاتصال بالسيرفر' : 'تعذّر تحميل الرصيد';
       }
 
-      try {
-        const { transactions } = await Vilue_Wallet.getMyTransactions();
-        renderTransactions(transactions);
-      } catch (err) {
+      if (txResult.status === 'fulfilled') {
+        renderTransactions(txResult.value.transactions);
+      } else {
         Vilue_Utils.qs('#tx-list').innerHTML = `<div class="card" style="text-align:center; padding: var(--sp-6); color: var(--color-text-muted); font-size: var(--fs-sm);">تعذّر تحميل المعاملات</div>`;
       }
     }

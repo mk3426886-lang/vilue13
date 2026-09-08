@@ -94,6 +94,10 @@
   margin-top: var(--sp-1);
 }
 
+.field-error[hidden] {
+  display: none;
+}
+
 .field-hint {
   display: block;
   color: var(--color-text-muted);

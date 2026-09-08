@@ -2,7 +2,7 @@
  * Vilue — marketplace module (frontend)
  */
 
-const Vilue_Marketplace = (() => {
+window.Vilue_Marketplace = (() => {
   async function browse({ category, search } = {}) {
     const params = new URLSearchParams();
     if (category) params.set('category', category);
