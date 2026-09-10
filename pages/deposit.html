@@ -43,8 +43,9 @@
 
         <div id="manual-review-fields">
           <div class="card" style="margin-bottom: var(--sp-4); text-align:center;">
-            <img src="../assets/payment/superqi-qr.jpg" alt="رمز الدفع" style="max-width:220px; width:100%; border-radius:14px; margin-bottom:10px;">
+            <img id="qr-image" src="../assets/payment/superqi-qr.jpg" alt="رمز الدفع" style="max-width:220px; width:100%; border-radius:14px; margin-bottom:10px;">
             <div id="receiving-account-info" style="font-size: var(--fs-sm); color: var(--color-text-muted);"></div>
+            <div id="mastercard-number" dir="ltr" style="display:none; font-size:22px; font-weight:800; color:var(--color-primary); letter-spacing:1px; padding:10px; background:var(--c-bg-field); border-radius:12px; margin-bottom:6px;">917390121577</div>
           </div>
 
           <div class="field">
@@ -95,7 +96,10 @@
     // MasterCard now runs through the exact same manual-review flow as
     // Super Qi (same QR code, same receiving account, same fields) —
     // both use this one message.
-    const RECEIVING_MESSAGE = 'حوّل المبلغ المكافئ بالدينار العراقي عبر رمز الدفع أعلاه إلى حساب سوبر كي (مصطفى اسعد): <strong dir="ltr">917390121577</strong>، وارفق صورة إيصال التحويل بالأسفل.';
+    const RECEIVING_MESSAGE = {
+      superqi: 'امسح رمز الدفع أعلاه بتطبيق سوبر كي وحوّل المبلغ المكافئ بالدينار العراقي، وارفق صورة إيصال التحويل بالأسفل.',
+      mastercard: 'حوّل المبلغ المكافئ بالدينار العراقي إلى رقم التحويل أعلاه، وارفق صورة إيصال التحويل بالأسفل.',
+    };
     const DISABLED_MESSAGES = {
       zaincash: 'إيداع زين كاش متوقف مؤقتاً، استخدم سوبر كي أو ماستركارد',
     };
@@ -121,7 +125,9 @@
         Vilue_Utils.qsa('.method-card').forEach((btn) => {
           btn.classList.toggle('is-active', btn.dataset.method === selectedMethod);
         });
-        infoBox.innerHTML = RECEIVING_MESSAGE;
+        infoBox.innerHTML = RECEIVING_MESSAGE[selectedMethod] || '';
+        Vilue_Utils.qs('#qr-image').style.display = selectedMethod === 'superqi' ? 'block' : 'none';
+        Vilue_Utils.qs('#mastercard-number').style.display = selectedMethod === 'mastercard' ? 'block' : 'none';
       }
 
       Vilue_Utils.qsa('.method-card').forEach((btn) => {

@@ -89,8 +89,11 @@
       const img = p.image_url
         ? `<img src="${p.image_url}" alt="">`
         : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.5"/></svg>`;
+      const outOfStock = p.quantity !== null && p.quantity !== undefined && p.quantity <= 0;
+      const badge = outOfStock ? '<div class="mkt-card-badge" style="position:absolute; top:8px; inset-inline-start:8px; background:var(--c-danger); color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:8px;">نفذت الكمية</div>' : '';
       return `
-        <a class="mkt-card" href="product.html?id=${p.id}" style="text-decoration:none; color:inherit;">
+        <a class="mkt-card" href="product.html?id=${p.id}" style="text-decoration:none; color:inherit; position:relative; ${outOfStock ? 'opacity:0.6;' : ''}">
+          ${badge}
           <div class="mkt-card-img">${img}</div>
           <div class="mkt-card-body">
             <div class="mkt-card-title">${p.title}</div>
@@ -148,7 +151,7 @@
         const { orders } = await Vilue_Marketplace.myPurchases();
         container.innerHTML = orders.length
           ? orders.map((o) => `
-            <div class="tx-row">
+            <div class="tx-row" data-product-id="${o.product_id}" style="cursor:pointer;">
               <div class="tx-icon out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="1.5"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.5"/></svg></div>
               <div class="tx-info">
                 <div class="tx-title">${(o.marketplace_products && o.marketplace_products.title) || 'منتج'}</div>
@@ -157,6 +160,11 @@
               <div class="tx-amount out">‎-${Vilue_Utils.formatSlon(o.price_slon)}</div>
             </div>`).join('')
           : '<p class="empty-note">ما سويت أي عملية شراء بعد.</p>';
+        container.querySelectorAll('[data-product-id]').forEach((row) => {
+          row.addEventListener('click', () => {
+            window.location.href = `product.html?id=${row.dataset.productId}`;
+          });
+        });
       } catch (err) {
         container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
       }

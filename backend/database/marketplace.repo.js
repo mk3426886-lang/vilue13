@@ -7,24 +7,39 @@
 
 const { getSupabase } = require('./supabaseClient');
 
-async function createListing(sellerId, { title, description, priceSlon, imageUrl, category, isDigital, deliveryContent }, isAdminListing = false) {
+// quantity: null means unlimited stock (the controller translates a
+// seller-entered "0" to null before calling this — see
+// marketplace.controller.js). productType: 'item' | 'credit_code'.
+async function createListing(sellerId, { title, description, priceSlon, imageUrl, category, quantity, productType, deliveryContent }, isAdminListing = false) {
   const supabase = getSupabase();
-  const { data, error } = await supabase.rpc('create_listing', {
+  const { data, error } = await supabase.rpc('create_listing_v2', {
     p_seller_id: sellerId,
     p_title: title,
     p_description: description || null,
     p_price_slon: priceSlon,
     p_image_url: imageUrl || null,
     p_category: category || null,
-    p_is_admin_listing: isAdminListing,
-    p_is_digital: !!isDigital,
+    p_quantity: quantity === undefined ? null : quantity,
+    p_product_type: productType || 'item',
     p_delivery_content: deliveryContent || null,
+    p_is_admin_listing: isAdminListing,
   });
   if (error) throw error;
   return data;
 }
 
-const PUBLIC_PRODUCT_COLS = 'id, seller_id, created_by_admin, title, description, price_slon, image_url, category, is_digital, status, created_at';
+// Seller uploads a batch of one-time codes for a credit_code listing.
+// quantity on the product is recalculated from the real unused count.
+async function addProductCodes(productId, sellerId, codes, isAdmin = false) {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.rpc('add_product_codes', {
+    p_product_id: productId, p_seller_id: sellerId, p_codes: codes, p_is_admin: isAdmin,
+  });
+  if (error) throw error;
+  return data;
+}
+
+const PUBLIC_PRODUCT_COLS = 'id, seller_id, created_by_admin, title, description, price_slon, image_url, category, is_digital, status, quantity, product_type, created_at';
 
 async function listApproved({ category, search, limit = 40, offset = 0 } = {}) {
   const supabase = getSupabase();
@@ -74,7 +89,7 @@ async function listMyPurchases(buyerId) {
 
 async function purchase(buyerId, productId) {
   const supabase = getSupabase();
-  const { data, error } = await supabase.rpc('purchase_product', {
+  const { data, error } = await supabase.rpc('purchase_product_v2', {
     p_buyer_id: buyerId, p_product_id: productId,
   });
   if (error) throw error;
@@ -112,6 +127,6 @@ async function setHidden(productId, hidden) {
 }
 
 module.exports = {
-  createListing, listApproved, getProduct, listMine, listMyPurchases, purchase,
+  createListing, addProductCodes, listApproved, getProduct, listMine, listMyPurchases, purchase,
   listPending, review, setHidden,
 };

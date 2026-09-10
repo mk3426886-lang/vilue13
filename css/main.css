@@ -197,7 +197,7 @@ img { max-width: 100%; display: block; }
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  padding: 0 var(--sp-5);
+  padding: 0 var(--sp-5) calc(var(--bottomnav-h) + var(--sp-6));
 }
 
 @media (min-width: 900px) {

@@ -39,7 +39,10 @@
         <form id="task-form" novalidate>
           <div class="field">
             <label class="field-label" for="channelUsername">معرّف القناة (يبدأ بـ @)</label>
-            <input class="field-input" id="channelUsername" type="text" placeholder="@my_channel" dir="ltr" required>
+            <div style="display:flex; gap:8px;">
+              <input class="field-input" id="channelUsername" type="text" placeholder="@my_channel" dir="ltr" required style="flex:1;">
+              <button type="button" id="open-channel-btn" class="btn-sm" style="border-radius:12px; padding:0 14px; white-space:nowrap;">فتح القناة</button>
+            </div>
           </div>
           <div class="field">
             <label class="field-label" for="rewardPerJoin">المكافأة لكل عضو (سلون، 40 كحد أدنى)</label>
@@ -210,6 +213,15 @@
 
       loadTelegramLinkCard();
       loadBrowse();
+
+      Vilue_Utils.qs('#open-channel-btn').addEventListener('click', () => {
+        const handle = Vilue_Utils.qs('#channelUsername').value.trim().replace(/^@/, '');
+        if (!handle) {
+          Vilue_Utils.showToast('اكتب معرّف القناة أول', 'error');
+          return;
+        }
+        window.open(`https://t.me/${handle}`, '_blank');
+      });
 
       Vilue_Utils.qs('#rewardPerJoin').addEventListener('input', updateCostPreview);
       Vilue_Utils.qs('#targetJoins').addEventListener('input', updateCostPreview);

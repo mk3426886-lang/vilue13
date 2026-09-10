@@ -13,6 +13,7 @@ router.post('/products', requireAuth, marketplaceController.create);
 router.get('/my-listings', requireAuth, marketplaceController.mine);
 router.get('/my-purchases', requireAuth, marketplaceController.myPurchases);
 router.post('/products/:productId/buy', requireAuth, marketplaceController.buy);
+router.post('/products/:productId/codes', requireAuth, marketplaceController.addCodes);
 
 // Admin
 router.post('/admin/products', requireAuth, requireAdmin, marketplaceController.adminCreate);

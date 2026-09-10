@@ -15,11 +15,17 @@ window.Vilue_Marketplace = (() => {
     return Vilue_Api.request(`/marketplace/products/${productId}`);
   }
 
-  async function create({ title, description, priceSlon, category, imageBase64, isDigital, deliveryContent }) {
+  async function create({ title, description, priceSlon, category, imageBase64, isDigital, deliveryContent, quantity, productType }) {
     return Vilue_Api.request('/marketplace/products', {
       method: 'POST',
       headers: Vilue_Auth.authHeader(),
-      body: { title, description, priceSlon, category, imageBase64, isDigital, deliveryContent },
+      body: { title, description, priceSlon, category, imageBase64, isDigital, deliveryContent, quantity, productType },
+    });
+  }
+
+  async function addCodes(productId, codes) {
+    return Vilue_Api.request(`/marketplace/products/${productId}/codes`, {
+      method: 'POST', headers: Vilue_Auth.authHeader(), body: { codes },
     });
   }
 
@@ -67,5 +73,5 @@ window.Vilue_Marketplace = (() => {
     });
   }
 
-  return { browse, getProduct, create, mine, myPurchases, buy, adminCreate, adminListPending, adminReview, readImageAsBase64 };
+  return { browse, getProduct, create, addCodes, mine, myPurchases, buy, adminCreate, adminListPending, adminReview, readImageAsBase64 };
 })();

@@ -48,15 +48,35 @@
           <input class="field-input" id="description" type="text" maxlength="1000" placeholder="تفاصيل إضافية عن المنتج">
         </div>
 
-        <div class="field checkbox-row">
+        <div class="field">
+          <label class="field-label">نوع المنتج</label>
+          <div class="method-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button type="button" class="method-card is-active" data-type="item">منتج عادي</button>
+            <button type="button" class="method-card" data-type="credit_code">رصيد بكود (كل مشتري ياخذ كود مختلف)</button>
+          </div>
+        </div>
+
+        <div class="field" id="quantity-field">
+          <label class="field-label" for="quantity">الكمية المتاحة</label>
+          <input class="field-input" id="quantity" type="number" min="0" step="1" placeholder="0" value="0">
+          <span class="field-hint">اكتب 0 يعني كمية لا نهائية (يبيع بدون حد). أي رقم غيره يعتبر الكمية المتاحة وتنقص مع كل عملية شراء.</span>
+        </div>
+
+        <div class="field checkbox-row" id="isDigital-row">
           <input type="checkbox" id="isDigital">
-          <label for="isDigital">منتج رقمي (يُسلَّم تلقائياً فور الشراء — مثل كود أو رصيد)</label>
+          <label for="isDigital">منتج رقمي (يُسلَّم تلقائياً فور الشراء — نفس المحتوى لكل المشترين)</label>
         </div>
 
         <div class="field" id="delivery-field" style="display:none;">
           <label class="field-label" for="deliveryContent">المحتوى اللي يستلمه المشتري</label>
           <input class="field-input" id="deliveryContent" type="text" placeholder="مثال: كود التفعيل أو رابط التحميل">
-          <span class="field-hint">يظهر هذا للمشتري بعد إتمام الدفع مباشرة، ولا يظهر لأي حد غيره</span>
+          <span class="field-hint">يظهر هذا لكل مشتري بعد إتمام الدفع مباشرة (نفس المحتوى للجميع)</span>
+        </div>
+
+        <div class="field" id="codes-field" style="display:none;">
+          <label class="field-label" for="codesInput">أكواد الرصيد (كود بكل سطر)</label>
+          <textarea class="field-input" id="codesInput" rows="6" style="resize:vertical;" placeholder="CODE-0001&#10;CODE-0002&#10;CODE-0003"></textarea>
+          <span class="field-hint">كل سطر = كود واحد يستلمه مشتري واحد بس. عدد الأكواد اللي تكتبها هو الكمية المتاحة تلقائياً — تقدر تضيف أكواد أكثر لاحقاً من "إعلاناتي".</span>
         </div>
 
         <button type="submit" class="btn btn-primary" id="submit-btn">نشر الإعلان</button>
@@ -74,10 +94,32 @@
     document.addEventListener('vilue:app-ready', () => {
       if (!Vilue_Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
 
+      let productType = 'item';
+      const quantityField = Vilue_Utils.qs('#quantity-field');
+      const isDigitalRow = Vilue_Utils.qs('#isDigital-row');
+      const codesField = Vilue_Utils.qs('#codes-field');
       const isDigitalCheckbox = Vilue_Utils.qs('#isDigital');
       const deliveryField = Vilue_Utils.qs('#delivery-field');
+
       isDigitalCheckbox.addEventListener('change', () => {
         deliveryField.style.display = isDigitalCheckbox.checked ? 'block' : 'none';
+      });
+
+      Vilue_Utils.qsa('[data-type]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          productType = btn.dataset.type;
+          Vilue_Utils.qsa('[data-type]').forEach((b) => b.classList.toggle('is-active', b === btn));
+          if (productType === 'credit_code') {
+            quantityField.style.display = 'none';
+            isDigitalRow.style.display = 'none';
+            deliveryField.style.display = 'none';
+            codesField.style.display = 'block';
+          } else {
+            quantityField.style.display = 'block';
+            isDigitalRow.style.display = 'flex';
+            codesField.style.display = 'none';
+          }
+        });
       });
 
       const imageInput = Vilue_Utils.qs('#image-input');
@@ -100,14 +142,28 @@
         const description = Vilue_Utils.qs('#description').value.trim();
         const isDigital = isDigitalCheckbox.checked;
         const deliveryContent = Vilue_Utils.qs('#deliveryContent').value.trim();
+        const quantity = Number(Vilue_Utils.qs('#quantity').value) || 0;
+        const codesRaw = Vilue_Utils.qs('#codesInput').value;
+        const codes = codesRaw.split('\n').map((c) => c.trim()).filter(Boolean);
 
         if (title.length < 3) { Vilue_Utils.showToast('العنوان قصير جداً', 'error'); return; }
         if (!price || price <= 0) { Vilue_Utils.showToast('أدخل سعراً صحيحاً', 'error'); return; }
-        if (isDigital && !deliveryContent) { Vilue_Utils.showToast('أدخل المحتوى اللي يستلمه المشتري', 'error'); return; }
+        if (productType === 'item' && isDigital && !deliveryContent) {
+          Vilue_Utils.showToast('أدخل المحتوى اللي يستلمه المشتري', 'error'); return;
+        }
+        if (productType === 'credit_code' && codes.length === 0) {
+          Vilue_Utils.showToast('أضف كود واحد على الأقل، كل كود بسطر لحاله', 'error'); return;
+        }
 
         Vilue_Utils.setLoading(submitBtn, true);
         try {
-          await Vilue_Marketplace.create({ title, description, priceSlon: price, category, imageBase64, isDigital, deliveryContent });
+          const { product } = await Vilue_Marketplace.create({
+            title, description, priceSlon: price, category, imageBase64, isDigital, deliveryContent,
+            quantity, productType,
+          });
+          if (productType === 'credit_code') {
+            await Vilue_Marketplace.addCodes(product.id, codes);
+          }
           Vilue_Utils.showToast('تم إرسال الإعلان للمراجعة', 'success');
           setTimeout(() => { window.location.href = 'marketplace.html'; }, 1200);
         } catch (err) {

@@ -28,7 +28,7 @@ async function getTransactions(userId, limit = 50) {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('wallet_transactions')
-    .select('*')
+    .select('*, counterparty:counterparty_user_id(name, display_user_id)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit);

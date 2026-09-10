@@ -28,6 +28,22 @@
       <div id="gift-options" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;"></div>
     </div>
 
+    <div id="gift-confirm-overlay" style="display:none; position:fixed; inset:0; background:rgba(11,19,48,0.55); z-index:200; align-items:flex-end; justify-content:center;">
+      <div style="background:#fff; width:100%; max-width:480px; border-radius:24px 24px 0 0; padding:28px 22px 32px; text-align:center;">
+        <div id="gift-confirm-emoji" style="font-size:40px; margin-bottom:10px;"></div>
+        <h2 style="margin:0 0 6px; font-size:18px; color:var(--color-primary);">تأكيد إرسال الهدية</h2>
+        <p style="margin:0 0 20px; font-size:13px; color:var(--color-text-muted);">تأكد قبل الإرسال — الهدايا لا يمكن استرجاعها</p>
+        <div style="background:var(--c-bg-field); border-radius:16px; padding:16px; margin-bottom:20px; text-align:start;">
+          <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span style="color:var(--color-text-muted);">الهدية</span><strong id="gift-confirm-name"></strong></div>
+          <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span style="color:var(--color-text-muted);">السعر</span><strong id="gift-confirm-price" style="color:var(--color-primary);"></strong></div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button type="button" id="gift-confirm-cancel" class="btn" style="flex:1; background:var(--c-bg-field); color:var(--color-primary);">إلغاء</button>
+          <button type="button" id="gift-confirm-ok" class="btn btn-primary" style="flex:1;">إرسال</button>
+        </div>
+      </div>
+    </div>
+
     <form id="chat-form" style="flex-shrink:0; display:flex; gap:8px; padding: var(--sp-3) var(--sp-4); background:var(--c-white); border-top:1px solid var(--color-border);">
       <input class="field-input" id="chat-input" type="text" placeholder="اكتب رسالة..." style="flex:1;" autocomplete="off">
       <button type="submit" class="btn-sm btn-primary" style="border-radius:12px; padding: 0 18px;">إرسال</button>
@@ -131,20 +147,45 @@
           giftPicker.style.display = 'block';
 
           Vilue_Utils.qsa('[data-gift]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-              btn.disabled = true;
-              try {
-                await Vilue_Messages.sendGift(friendId, btn.dataset.gift, 1);
-                giftPicker.style.display = 'none';
-                loadMessages();
-              } catch (err) {
-                Vilue_Utils.showToast(
-                  err.code === 'INSUFFICIENT_BALANCE' ? 'رصيدك غير كافٍ لإرسال هذي الهدية' : err.message,
-                  'error'
-                );
-              } finally {
-                btn.disabled = false;
+            btn.addEventListener('click', () => {
+              const type = btn.dataset.gift;
+              const label = GIFT_LABELS[type] || { emoji: '🎁', name: type };
+              const price = catalog[type];
+
+              Vilue_Utils.qs('#gift-confirm-emoji').textContent = label.emoji;
+              Vilue_Utils.qs('#gift-confirm-name').textContent = label.name;
+              Vilue_Utils.qs('#gift-confirm-price').textContent = `${Vilue_Utils.formatSlon(price)} سلون`;
+              Vilue_Utils.qs('#gift-confirm-overlay').style.display = 'flex';
+
+              const okBtn = Vilue_Utils.qs('#gift-confirm-ok');
+              const cancelBtn = Vilue_Utils.qs('#gift-confirm-cancel');
+              const closeConfirm = () => { Vilue_Utils.qs('#gift-confirm-overlay').style.display = 'none'; };
+
+              const onCancel = () => { closeConfirm(); cleanup(); };
+              const onConfirm = async () => {
+                Vilue_Utils.setLoading(okBtn, true);
+                try {
+                  await Vilue_Messages.sendGift(friendId, type, 1);
+                  closeConfirm();
+                  giftPicker.style.display = 'none';
+                  loadMessages();
+                } catch (err) {
+                  Vilue_Utils.showToast(
+                    err.code === 'INSUFFICIENT_BALANCE' ? 'رصيدك غير كافٍ لإرسال هذي الهدية' : err.message,
+                    'error'
+                  );
+                  closeConfirm();
+                } finally {
+                  Vilue_Utils.setLoading(okBtn, false);
+                  cleanup();
+                }
+              };
+              function cleanup() {
+                okBtn.removeEventListener('click', onConfirm);
+                cancelBtn.removeEventListener('click', onCancel);
               }
+              okBtn.addEventListener('click', onConfirm);
+              cancelBtn.addEventListener('click', onCancel);
             });
           });
         } catch (err) {
