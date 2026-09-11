@@ -8,7 +8,10 @@ const walletsRepo = require('../database/wallets.repo');
 const settingsRepo = require('../database/settings.repo');
 const usersRepo = require('../database/users.repo');
 const { getReceiptSignedUrl, deleteReceiptImage, uploadProductImage } = require('../services/storage.service');
+<<<<<<< HEAD:backend/controllers/admin.controller.js
 const telegramService = require('../services/telegram.service');
+=======
+>>>>>>> f368d0cdc6865aa22f1fc44a52e89e42fd272ae6:backend/admin.controller.js
 
 async function listUsers(req, res) {
   try {
