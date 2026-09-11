@@ -21,8 +21,8 @@ async function create(req, res) {
     if (!reward || reward < 40) {
       return res.status(400).json({ code: 'REWARD_TOO_LOW', message: 'Reward must be at least 40 SLON per join' });
     }
-    if (!target || target < 1000 || target > 100000) {
-      return res.status(400).json({ code: 'INVALID_TARGET', message: 'Target must be between 1,000 and 100,000' });
+    if (!target || target < 1 || target > 100000) {
+      return res.status(400).json({ code: 'INVALID_TARGET', message: 'Target must be between 1 and 100,000' });
     }
 
     const user = await usersRepo.findById(req.userId);

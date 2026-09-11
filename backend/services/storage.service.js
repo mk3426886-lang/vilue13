@@ -45,6 +45,21 @@ async function getReceiptSignedUrl(path, expiresInSeconds = 300) {
 }
 
 /**
+ * Deletes a receipt image once its deposit request has been reviewed
+ * (approved or rejected) — nobody needs to look at it again after that,
+ * so this keeps the "receipts" bucket from growing forever. Called from
+ * admin.controller.js right after a review completes. Failures here are
+ * logged but never block the review itself — losing an old receipt
+ * image is not worth failing an approval/rejection over.
+ */
+async function deleteReceiptImage(path) {
+  if (!path) return;
+  const supabase = getSupabase();
+  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+  if (error) console.error('[storage] failed to delete receipt image:', error.message);
+}
+
+/**
  * Uploads a marketplace product image to the public "products" bucket.
  * Create it once in Supabase: Storage → New bucket → name it exactly
  * "products" → mark it PUBLIC (product photos need to be viewable by
@@ -99,4 +114,4 @@ async function uploadAvatarImage(userId, base64Image) {
   return data.publicUrl;
 }
 
-module.exports = { uploadReceiptImage, getReceiptSignedUrl, uploadProductImage, uploadAvatarImage };
+module.exports = { uploadReceiptImage, getReceiptSignedUrl, deleteReceiptImage, uploadProductImage, uploadAvatarImage };

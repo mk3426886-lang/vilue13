@@ -49,6 +49,14 @@ window.Vilue_Admin = (() => {
     return Vilue_Api.request('/admin/platform-wallet', { headers: Vilue_Auth.authHeader() });
   }
 
+  async function resetPlatformWallet() {
+    return Vilue_Api.request('/admin/platform-wallet/reset', { method: 'POST', headers: Vilue_Auth.authHeader() });
+  }
+
+  async function setupTelegramWebhook() {
+    return Vilue_Api.request('/admin/telegram/setup-webhook', { method: 'POST', headers: Vilue_Auth.authHeader() });
+  }
+
   async function setVerificationBadge(userId, verified) {
     return Vilue_Api.request(`/admin/users/${userId}/verify`, {
       method: 'PATCH', headers: Vilue_Auth.authHeader(), body: { verified },
@@ -69,6 +77,6 @@ window.Vilue_Admin = (() => {
 
   return {
     listUsers, setUserSuspended, listPendingDeposits, listPendingWithdrawals, reviewDeposit, reviewWithdrawal,
-    getSettings, updateSettings, getPlatformWallet, setVerificationBadge, promoteToAdmin, demoteAdmin,
+    getSettings, updateSettings, getPlatformWallet, resetPlatformWallet, setupTelegramWebhook, setVerificationBadge, promoteToAdmin, demoteAdmin,
   };
 })();

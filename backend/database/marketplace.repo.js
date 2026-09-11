@@ -126,7 +126,20 @@ async function setHidden(productId, hidden) {
   if (error) throw error;
 }
 
+// Seller can delete their own listing; admins can delete any listing.
+async function deleteListing(productId, userId, isAdmin = false) {
+  const supabase = getSupabase();
+  const { data: product, error: fetchErr } = await supabase
+    .from('marketplace_products').select('seller_id').eq('id', productId).maybeSingle();
+  if (fetchErr) throw fetchErr;
+  if (!product) throw new Error('PRODUCT_NOT_FOUND');
+  if (!isAdmin && product.seller_id !== userId) throw new Error('NOT_OWNER');
+
+  const { error } = await supabase.from('marketplace_products').delete().eq('id', productId);
+  if (error) throw error;
+}
+
 module.exports = {
-  createListing, addProductCodes, listApproved, getProduct, listMine, listMyPurchases, purchase,
+  createListing, addProductCodes, deleteListing, listApproved, getProduct, listMine, listMyPurchases, purchase,
   listPending, review, setHidden,
 };

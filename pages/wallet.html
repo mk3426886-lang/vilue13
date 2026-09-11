@@ -222,9 +222,12 @@
         ['التاريخ والوقت', new Date(tx.created_at).toLocaleString('ar-IQ')],
       ];
 
-      if (tx.counterparty && (tx.type === 'transfer_in' || tx.type === 'transfer_out')) {
-        const label = tx.type === 'transfer_out' ? 'التحويل إلى' : 'التحويل من';
-        rows.push([label, `${tx.counterparty.name} <span dir="ltr" style="color:var(--color-text-muted); font-size:11px;">#${tx.counterparty.display_user_id}</span>`]);
+      if (tx.counterparty && ['transfer_in', 'transfer_out', 'gift_sent', 'gift_received'].includes(tx.type)) {
+        const labels = {
+          transfer_out: 'التحويل إلى', transfer_in: 'التحويل من',
+          gift_sent: 'الهدية إلى', gift_received: 'الهدية من',
+        };
+        rows.push([labels[tx.type], `${tx.counterparty.name} <span dir="ltr" style="color:var(--color-text-muted); font-size:11px;">#${tx.counterparty.display_user_id}</span>`]);
       }
       if (tx.meta && tx.meta.method) {
         const methodLabels = { zaincash: 'زين كاش', superqi: 'سوبر كي', mastercard: 'ماستركارد' };

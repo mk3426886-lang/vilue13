@@ -14,6 +14,7 @@ router.get('/my-listings', requireAuth, marketplaceController.mine);
 router.get('/my-purchases', requireAuth, marketplaceController.myPurchases);
 router.post('/products/:productId/buy', requireAuth, marketplaceController.buy);
 router.post('/products/:productId/codes', requireAuth, marketplaceController.addCodes);
+router.delete('/products/:productId', requireAuth, marketplaceController.deleteProduct);
 
 // Admin
 router.post('/admin/products', requireAuth, requireAdmin, marketplaceController.adminCreate);

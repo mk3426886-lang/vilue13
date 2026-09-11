@@ -24,6 +24,8 @@ router.get('/settings', adminController.getSettings);
 router.patch('/settings', adminController.updateSettings);
 router.post('/settings/banner-image', adminController.uploadBannerImage);
 router.get('/platform-wallet', adminController.getPlatformWallet);
+router.post('/platform-wallet/reset', adminController.resetPlatformWallet);
+router.post('/telegram/setup-webhook', adminController.setupTelegramWebhook);
 
 // Owner only
 router.post('/users/:userId/promote-admin', requireOwner, adminController.promoteToAdmin);

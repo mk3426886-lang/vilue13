@@ -73,5 +73,11 @@ window.Vilue_Marketplace = (() => {
     });
   }
 
-  return { browse, getProduct, create, addCodes, mine, myPurchases, buy, adminCreate, adminListPending, adminReview, readImageAsBase64 };
+  async function deleteListing(productId) {
+    return Vilue_Api.request(`/marketplace/products/${productId}`, {
+      method: 'DELETE', headers: Vilue_Auth.authHeader(),
+    });
+  }
+
+  return { browse, getProduct, create, addCodes, deleteListing, mine, myPurchases, buy, adminCreate, adminListPending, adminReview, readImageAsBase64 };
 })();

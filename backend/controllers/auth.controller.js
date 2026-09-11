@@ -208,12 +208,23 @@ async function login(req, res) {
     // used for withdrawals/transfers). Every successful password check
     // now requires an emailed code before a session is issued, so a
     // leaked password alone can't log in to the account.
-    await otpService.requestOtp({
-      userId: user.id,
-      contact: user.email,
-      contactType: 'email',
-      lang: user.language || 'ar',
-    });
+    try {
+      await otpService.requestOtp({
+        userId: user.id,
+        contact: user.email,
+        contactType: 'email',
+        lang: user.language || 'ar',
+      });
+    } catch (otpErr) {
+      // A cooldown here just means a code was already sent moments ago
+      // (e.g. the person tapped "متابعة" twice) — that code is still
+      // valid, so let them through to enter it instead of showing an
+      // error. Only a genuine rate-limit (too many sends in 15 min) or
+      // an actual send failure should stop login.
+      if (otpErr.code !== 'OTP_COOLDOWN') {
+        throw otpErr;
+      }
+    }
 
     return res.status(200).json({
       loginVerificationRequired: true,
@@ -223,6 +234,9 @@ async function login(req, res) {
   } catch (err) {
     if (err.code === 'DEVICE_SWITCH_COOLDOWN') {
       return res.status(403).json({ code: err.code, message: err.message, retryAt: err.retryAt });
+    }
+    if (err.code === 'OTP_RATE_LIMITED') {
+      return res.status(429).json({ code: err.code, message: 'حاولت كثير بوقت قصير — انتظر شوي وجرب من جديد' });
     }
     return res.status(500).json({ code: 'LOGIN_FAILED', message: err.message });
   }

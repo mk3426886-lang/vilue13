@@ -43,14 +43,15 @@
               <input class="field-input" id="channelUsername" type="text" placeholder="@my_channel" dir="ltr" required style="flex:1;">
               <button type="button" id="open-channel-btn" class="btn-sm" style="border-radius:12px; padding:0 14px; white-space:nowrap;">فتح القناة</button>
             </div>
+            <span class="field-hint" style="display:block; margin-top:6px; color:var(--c-danger);">⚠️ مهم: لازم تضيف بوت فيليو <strong>مشرف (Admin)</strong> بالقناة أو الكروب قبل نشر المهمة، وإلا ما راح يتحقق من انضمام الأعضاء إطلاقاً.</span>
           </div>
           <div class="field">
             <label class="field-label" for="rewardPerJoin">المكافأة لكل عضو (سلون، 40 كحد أدنى)</label>
             <input class="field-input" id="rewardPerJoin" type="number" min="40" step="1" placeholder="40" required>
           </div>
           <div class="field">
-            <label class="field-label" for="targetJoins">عدد الأعضاء المستهدف (1,000 - 100,000)</label>
-            <input class="field-input" id="targetJoins" type="number" min="1000" max="100000" step="1" placeholder="1000" required>
+            <label class="field-label" for="targetJoins">عدد الأعضاء المستهدف (1 - 100,000)</label>
+            <input class="field-input" id="targetJoins" type="number" min="1" max="100000" step="1" placeholder="1" required>
           </div>
           <div class="card" id="cost-preview" style="margin-bottom: var(--sp-4); text-align:center; font-weight:700; color: var(--color-primary);">
             التكلفة الكاملة: —
@@ -184,15 +185,30 @@
       try {
         const { tasks } = await Vilue_Tasks.browse();
         container.innerHTML = tasks.length
-          ? tasks.map((t) => `
-            <div class="admin-card">
-              <div class="admin-card-head">
-                <div class="admin-user-name" dir="ltr">${t.channel_username}</div>
-                <div class="admin-amount">${Vilue_Utils.formatSlon(t.reward_per_join_slon)} سلون</div>
-              </div>
-              <div class="admin-row"><span>التقدم</span><strong>${t.joins_count} / ${t.target_joins}</strong></div>
-              <p style="font-size:11px; color:var(--color-text-muted); margin-top:6px;">انضم للقناة وابقَ فيها لتحصل على المكافأة تلقائياً. مغادرة القناة تخصم نفس المبلغ.</p>
-            </div>`).join('')
+          ? tasks.map((t) => {
+              const handle = t.channel_username.replace(/^@/, '');
+              const progressPct = Math.min(100, Math.round((t.joins_count / t.target_joins) * 100));
+              return `
+              <div class="admin-card">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                  <div style="width:40px; height:40px; border-radius:50%; background:var(--color-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; flex-shrink:0;">
+                    ${handle.charAt(0).toUpperCase()}
+                  </div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-weight:700; font-size:14px;" dir="ltr">@${handle}</div>
+                    <div style="font-size:11px; color:var(--color-text-muted);">${t.joins_count} / ${t.target_joins} عضو</div>
+                  </div>
+                  <div class="admin-amount">${Vilue_Utils.formatSlon(t.reward_per_join_slon)} سلون</div>
+                </div>
+                <div style="height:6px; background:var(--c-bg-field); border-radius:99px; overflow:hidden; margin-bottom:12px;">
+                  <div style="height:100%; width:${progressPct}%; background:var(--color-primary); border-radius:99px;"></div>
+                </div>
+                <a href="https://t.me/${handle}" target="_blank" rel="noopener" class="btn-sm btn-primary" style="display:block; text-align:center; text-decoration:none; border-radius:10px; margin-bottom:8px;">
+                  افتح القناة وانضم
+                </a>
+                <p style="font-size:11px; color:var(--color-text-muted); line-height:1.6;">بعد الانضمام، النظام يتحقق تلقائياً ويضيف المكافأة لرصيدك خلال دقائق. ابقَ بالقناة — مغادرتها تخصم نفس المبلغ من رصيدك.</p>
+              </div>`;
+            }).join('')
           : '<p class="empty-note">لا توجد مهام متاحة حالياً.</p>';
       } catch (err) {
         container.innerHTML = `<p class="empty-note">تعذّر التحميل: ${err.message}</p>`;
@@ -250,8 +266,8 @@
           Vilue_Utils.showToast('المكافأة لازم تكون 40 سلون على الأقل', 'error');
           return;
         }
-        if (!targetJoins || targetJoins < 1000 || targetJoins > 100000) {
-          Vilue_Utils.showToast('العدد المستهدف بين 1000 و100000', 'error');
+        if (!targetJoins || targetJoins < 1 || targetJoins > 100000) {
+          Vilue_Utils.showToast('العدد المستهدف بين 1 و100000', 'error');
           return;
         }
 
@@ -267,7 +283,7 @@
             TELEGRAM_NOT_LINKED: 'اربط حساب تليكرام أول من الأعلى',
             INSUFFICIENT_BALANCE: 'رصيدك غير كافٍ لتغطية تكلفة المهمة كاملة',
             REWARD_TOO_LOW: 'المكافأة لازم تكون 40 سلون على الأقل',
-            INVALID_TARGET: 'العدد المستهدف بين 1000 و100000',
+            INVALID_TARGET: 'العدد المستهدف بين 1 و100000',
           };
           Vilue_Utils.showToast(messages[err.code] || err.message, 'error');
         } finally {

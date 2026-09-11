@@ -32,6 +32,21 @@ async function getPlatformWallet() {
   return data;
 }
 
+// Zeroes out accumulated platform commissions — e.g. after the owner
+// has withdrawn/accounted for them elsewhere. Irreversible; the
+// frontend confirms with the admin before calling this.
+async function resetPlatformWallet() {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('platform_wallet')
+    .update({ balance_slon: 0, updated_at: new Date().toISOString() })
+    .eq('id', true)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 async function getPublicSettings() {
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -43,4 +58,4 @@ async function getPublicSettings() {
   return data;
 }
 
-module.exports = { getSettings, updateSettings, getPlatformWallet, getPublicSettings };
+module.exports = { getSettings, updateSettings, getPlatformWallet, resetPlatformWallet, getPublicSettings };

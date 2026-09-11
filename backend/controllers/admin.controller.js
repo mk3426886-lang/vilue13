@@ -7,7 +7,8 @@ const { getSupabase } = require('../database/supabaseClient');
 const walletsRepo = require('../database/wallets.repo');
 const settingsRepo = require('../database/settings.repo');
 const usersRepo = require('../database/users.repo');
-const { getReceiptSignedUrl, uploadProductImage } = require('../services/storage.service');
+const { getReceiptSignedUrl, deleteReceiptImage, uploadProductImage } = require('../services/storage.service');
+const telegramService = require('../services/telegram.service');
 
 async function listUsers(req, res) {
   try {
@@ -66,6 +67,9 @@ async function reviewDeposit(req, res) {
       return res.status(400).json({ code: 'INVALID_ACTION', message: 'action must be approve or reject' });
     }
     const tx = await walletsRepo.reviewDeposit(transactionId, action, note);
+    if (tx.meta && tx.meta.receipt_url) {
+      deleteReceiptImage(tx.meta.receipt_url).catch(() => {}); // best-effort, never blocks the response
+    }
     return res.status(200).json({ transaction: tx });
   } catch (err) {
     return res.status(500).json({ code: 'REVIEW_FAILED', message: err.message });
@@ -174,6 +178,29 @@ async function getPlatformWallet(req, res) {
     return res.status(200).json({ balanceSlon: Number(wallet.balance_slon), updatedAt: wallet.updated_at });
   } catch (err) {
     return res.status(500).json({ code: 'FETCH_FAILED', message: err.message });
+  }
+}
+
+// Zeroes accumulated platform commissions. Frontend confirms with the
+// admin first — this itself doesn't ask twice, it just does it.
+async function resetPlatformWallet(req, res) {
+  try {
+    const wallet = await settingsRepo.resetPlatformWallet();
+    return res.status(200).json({ balanceSlon: Number(wallet.balance_slon), updatedAt: wallet.updated_at });
+  } catch (err) {
+    return res.status(500).json({ code: 'RESET_FAILED', message: err.message });
+  }
+}
+
+// One-click fix for "joins never get counted" — registers the Telegram
+// webhook with chat_member included in allowed_updates (missing by
+// default, which is why join/leave events were silently dropped).
+async function setupTelegramWebhook(req, res) {
+  try {
+    const result = await telegramService.setupWebhook();
+    return res.status(200).json({ success: true, result });
+  } catch (err) {
+    return res.status(500).json({ code: 'WEBHOOK_SETUP_FAILED', message: err.message });
   }
 }
 
@@ -296,8 +323,8 @@ async function setDisplayId(req, res) {
   try {
     const { userId } = req.params;
     const { newId } = req.body;
-    if (!newId || !/^\d{6,12}$/.test(newId.trim())) {
-      return res.status(400).json({ code: 'INVALID_ID', message: 'ID must be 6-12 digits' });
+    if (!newId || !/^\d{1,12}$/.test(newId.trim())) {
+      return res.status(400).json({ code: 'INVALID_ID', message: 'ID must be 1-12 digits' });
     }
     await usersRepo.adminSetDisplayId(userId, newId.trim());
     return res.status(200).json({ success: true });
@@ -350,7 +377,7 @@ async function getUserDetails(req, res) {
 module.exports = {
   listUsers, setUserSuspended, listPendingDeposits, listPendingWithdrawals,
   reviewDeposit, reviewWithdrawal, getReceiptUrl,
-  getSettings, updateSettings, uploadBannerImage, getPlatformWallet,
+  getSettings, updateSettings, uploadBannerImage, getPlatformWallet, resetPlatformWallet, setupTelegramWebhook,
   setVerificationBadge, promoteToAdmin, demoteAdmin,
   banUser, unbanUser, deleteUser, setDisplayId, getUserDetails,
 };

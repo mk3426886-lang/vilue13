@@ -215,7 +215,19 @@ async function adminSetHidden(req, res) {
   }
 }
 
+// Seller deletes their own listing; admins can delete any listing.
+async function deleteProduct(req, res) {
+  try {
+    await marketplaceRepo.deleteListing(req.params.productId, req.userId, !!req.isAdmin || !!req.isOwner);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    const dbCode = (err.message || '').match(/PRODUCT_NOT_FOUND|NOT_OWNER/);
+    if (dbCode) return res.status(dbCode[0] === 'NOT_OWNER' ? 403 : 404).json({ code: dbCode[0], message: dbCode[0] });
+    return res.status(500).json({ code: 'DELETE_FAILED', message: err.message });
+  }
+}
+
 module.exports = {
-  browse, getOne, create, addCodes, mine, myPurchases, buy,
+  browse, getOne, create, addCodes, deleteProduct, mine, myPurchases, buy,
   adminCreate, adminListPending, adminReview, adminSetHidden,
 };
